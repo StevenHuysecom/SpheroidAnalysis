@@ -3,10 +3,10 @@ close all;
 clc;
 %% User Input
 file.ext  = '.lif';
-MainFolder = {'M:\Data Uptake\AuNP@mSi@PEI'};
-DimensionFolders = {'3D'};
-HourFolders = {'3hour', '6hour', '24hour', '48hour'};
-ParticleFolders = {'A549', 'HeLa', 'KM12C', 'MCF7'};
+MainFolder = {'C:\Users\Stevens Magic Pc\Documents\Data_Maria'};
+DimensionFolders = {'Harddrive_maria'};
+HourFolders = {'Hela_missing_file'};
+ParticleFolders = {'data'};
 
 %Give info about the channels, the word needs to be lowercase with no typos
 %care that the
