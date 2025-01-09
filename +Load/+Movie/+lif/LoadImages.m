@@ -46,6 +46,8 @@ function LoadImages(file, chan)
                             assert("Unknown channel detected - not membrane neither particles")
                         end
                     end
+
+                    clear Membrane Particles
                 end
             end
         end

@@ -179,9 +179,9 @@ classdef MonolayerSegmentation < handle
                 f = waitbar(0,'DL segmentation - slice by slice');
                 cp = cellpose;
                 if strcmp(obj.info.Membrane, 'included')
-                    CellThreshold = 0;
+                    CellThr = 0;
                 elseif strcmp(obj.info.Membrane, 'excluded')
-                    CellThreshold = 10;
+                    CellThr = 12;
                 else
                     error('Check membrane parameter: included or excluded')
                 end
@@ -190,7 +190,7 @@ classdef MonolayerSegmentation < handle
                     waitbar(i./size(medData,3),f,'DL segmentation - slice by slice');
                     label= segmentCells2D(cp,data(:,:,i), ...
                         ImageCellDiameter=120, ...
-                        CellThreshold=CellThreshold, ...
+                        CellThreshold= CellThr, ...
                         FlowErrorThreshold=0.4, ...
                         Tile=true,...
                         TileOverlap=0.5);
