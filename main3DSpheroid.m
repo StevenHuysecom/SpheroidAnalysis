@@ -3,10 +3,10 @@ close all;
 clc;
 %% User Input
 file.ext  = '.lif';
-MainFolder = {'C:\Users\Stevens Magic Pc\Documents\Data_Maria'};
-DimensionFolders = {'Harddrive_maria'};
-HourFolders = {'Hela_missing_file'};
-ParticleFolders = {'data'};
+MainFolder = {'E:\Steven'};
+DimensionFolders = {'3D'};
+HourFolders = {'3h', '48h'};
+ParticleFolders = {'A549', 'HeLa', 'KM12C', 'MCF7'};
 
 %Give info about the channels, the word needs to be lowercase with no typos
 %care that the
@@ -71,9 +71,9 @@ for m = 1:numel(DimensionFolders)
                         end
                     end
                     filename = append(SubFolder(1).folder, filesep,'IntMatrix.mat');
-                    saveas(filename, 'IntMatrix');
+                    save(filename, 'IntMatrix');
                     filename = append(SubFolder(1).folder, filesep,'SpheroidIntTotal.mat');
-                    saveas(filename, 'SpheroidInt');
+                    save(filename, 'SpheroidInt');
                 end
             end
         end
