@@ -169,9 +169,9 @@ classdef Spheroid3D < handle
                 f = waitbar(0,'DL segmentation - slice by slice');
                 cp = cellpose;
                 if strcmp(obj.info.Membrane, 'included')
-                    CellThreshold = 0;
+                    CellThr = 0;
                 elseif strcmp(obj.info.Membrane, 'excluded')
-                    CellThreshold = 4;
+                    CellThr = 10;
                 else
                     error('Check membrane parameter: included or excluded')
                 end
@@ -179,8 +179,8 @@ classdef Spheroid3D < handle
                     waitbar(i./size(medData,3),f,'DL segmentation - slice by slice');
                     label= segmentCells2D(cp,data(:,:,i), ...
                         ImageCellDiameter=120, ...
-                        CellThreshold=0, ...
-                        FlowErrorThreshold=0.4, ...
+                        CellThreshold=CellThr, ...
+                        FlowErrorThreshold=0.1, ...
                         Tile=true,...
                         TileOverlap=0.5);
                     labelsFull(:,:,i) = label;
@@ -363,9 +363,9 @@ classdef Spheroid3D < handle
                 num_chunks = ceil(size(PartSph, 1) / chunk_size);
                 f = waitbar(0, 'Putting origin on spheroid edge (on GPU)');
                 IntCoord = zeros(size(PartSph, 1), 2);
-                SpheroidSph_gpu = gpuArray(SpheroidSph(:, 1:2));
-                SpheroidSph_z_gpu = gpuArray(SpheroidSph(:, 3)); 
-                PartSph_gpu = gpuArray(PartSph);
+                SpheroidSph_gpu = SpheroidSph(:, 1:2); %gpuArray(SpheroidSph(:, 1:2));
+                SpheroidSph_z_gpu = SpheroidSph(:, 3); %gpuArray(SpheroidSph(:, 3)); 
+                PartSph_gpu = PartSph; %gpuArray(PartSph);
                 IntList = PartCart(:,4);
                 for chunk_idx = 1:num_chunks
                     waitbar(chunk_idx / num_chunks, f, 'Putting origin on spheroid edge (on GPU)');
@@ -374,7 +374,7 @@ classdef Spheroid3D < handle
                     current_chunk = PartSph_gpu(chunk_start:chunk_end, :);
                     temp_IntCoord = zeros(size(current_chunk, 1), 2);
                     parfor i = 1:size(current_chunk, 1)
-                        current_point_gpu = gpuArray(current_chunk(i, 1:2));
+                        current_point_gpu = current_chunk(i, 1:2); %gpuArray(current_chunk(i, 1:2));
                         distances_gpu = sqrt(sum((SpheroidSph_gpu - current_point_gpu).^2, 2));
                         [Min, minIndex] = min(gather(distances_gpu));
                         NewCoord = gather(SpheroidSph_z_gpu(minIndex)) - current_chunk(i, 3);

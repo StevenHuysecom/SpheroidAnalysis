@@ -180,6 +180,7 @@ classdef MonolayerSegmentation < handle
                 % se = strel('square', 2);
                 f = waitbar(0,'DL segmentation - slice by slice');
                 cp = cellpose;
+<<<<<<< HEAD
                 % if strcmp(obj.info.Membrane, 'included')
                 %     CellThreshold = 0;
                 % elseif strcmp(obj.info.Membrane, 'excluded')
@@ -222,6 +223,31 @@ classdef MonolayerSegmentation < handle
                                 result(r, c) = 0;
                             end
                         end
+=======
+                if strcmp(obj.info.Membrane, 'included')
+                    CellThr = 0;
+                elseif strcmp(obj.info.Membrane, 'excluded')
+                    CellThr = 10;
+                else
+                    error('Check membrane parameter: included or excluded')
+                end
+                
+                for i = 1:size(data,3)
+                    waitbar(i./size(medData,3),f,'DL segmentation - slice by slice');
+                    label= segmentCells2D(cp,data(:,:,i), ...
+                        ImageCellDiameter=120, ...
+                        CellThreshold= CellThr, ...
+                        FlowErrorThreshold=0.1, ...
+                        Tile=true,...
+                        TileOverlap=0.5);
+                    labelsFull(:,:,i) = label;
+                    Segments = zeros(size(label));
+                    for j = 1:max(label(:))
+                        segment = zeros(size(label));
+                        segment(label == j) = 1;
+                        segmenteroded = imerode(segment,se);
+                        Segments(segmenteroded == 1) = 1;
+>>>>>>> b1040738629b40828fc7e47f9da05a41c88761be
                     end
                     label = result;
                     labelsFull(:,:,i) = label;
