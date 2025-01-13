@@ -177,7 +177,7 @@ classdef MonolayerSegmentation < handle
                 labelsFull = labelsCut;
                 se = strel('square', 2);
                 f = waitbar(0,'DL segmentation - slice by slice');
-                cp = cellpose;
+                cp = cellpose('use_gpu', false);
                 if strcmp(obj.info.Membrane, 'included')
                     CellThr = 0;
                 elseif strcmp(obj.info.Membrane, 'excluded')
