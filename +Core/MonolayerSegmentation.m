@@ -327,14 +327,6 @@ classdef MonolayerSegmentation < handle
 
             filename = append(obj.raw.path, filesep, 'IntMatrix.mat');
             save(filename, 'IntMatrix');
-
-            PartDensMatrix = zeros(size(IntMatrix));
-            Numbers = unique(IntMatrix);
-            for i = 1:size(Numbers, 1)
-                Intensity = Numbers(i);
-                Idx = find(Int == Intensity);
-                PartDensMatrix(find(round(PartDensMatrix, -2) == round(Intensity, -2))) = IntRatio(Idx);
-            end
         end
 
         
