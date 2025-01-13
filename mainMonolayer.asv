@@ -49,7 +49,6 @@ for m = 1:numel(DimensionFolders)
                             MembrInt = [];
                             CellDens = [];
                             MembrDens = [];
-                            VolumeList = [];
                             for j = 1:size(SubFolder,1)
                                 try
                                     if isSubDirColumn(j,1) == 1
@@ -63,12 +62,11 @@ for m = 1:numel(DimensionFolders)
                                         Ws = stack.segmentMembraneDL;
                         
                                         %% Particle Intensity
-                                        [Int, MembraneInt, IntRatio, MembrIntRatio, Volume]= stack.getIntensityInside();
+                                        [Int, MembraneInt, IntRatio, MembrIntRatio]= stack.getIntensityInside();
                                         CellInt = [CellInt; Int];
                                         MembrInt = [MembrInt; MembraneInt];
                                         CellDens = [CellDens; IntRatio];
                                         MembrDens = [MembrDens; MembrIntRatio];
-                                        VolumeList = [VolumeList; Volume];
                                     end
                                 catch
                                     continue
@@ -76,14 +74,10 @@ for m = 1:numel(DimensionFolders)
                             end
                             filenameCell = append(SubFolder(1).folder, filesep,'CellInt.mat');
                             filenameMembr = append(SubFolder(1).folder, filesep,'MembrInt.mat');
-                            filenameCellDens = append(SubFolder(1).folder, filesep,'CellDens.mat');
-                            filenameMembrDens = append(SubFolder(1).folder, filesep,'MembrDens.mat');
-                            filenameVolume = append(SubFolder(1).folder, filesep,'VolumeList.mat');
+                            filenameCell = append(SubFolder(1).folder, filesep,'CellDens.mat');
+                            filenameMembr = append(SubFolder(1).folder, filesep,'MembrInt.mat');
                             save(filenameCell, 'CellInt');
                             save(filenameMembr, 'MembrInt');
-                            save(filenameCellDens, 'CellDens');
-                            save(filenameMembrDens, 'MembrDens');
-                            save(filenameVolume, 'VolumeList');
                             close all
                         catch
                             continue
