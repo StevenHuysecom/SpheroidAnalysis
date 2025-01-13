@@ -150,7 +150,7 @@ classdef MonolayerSegmentation < handle
                 disp('(re)running segmentation')
                 data = obj.getChannel('membrane');
                     
-                medData = medfilt3(data);
+                % medData = medfilt3(data);
     
                 %% Intcorrection in z
                 % f = waitbar(0,'Intensity Corrections');
@@ -174,7 +174,7 @@ classdef MonolayerSegmentation < handle
     
                 %% Deeplearning segmentation
                 tic
-                labelsCut = zeros(size(data));
+                labelsCut = zeros(size(Membrane));
                 labelsFull = labelsCut;
                 labelsBin = labelsFull;
                 % se = strel('square', 2);
@@ -188,8 +188,8 @@ classdef MonolayerSegmentation < handle
                 %     error('Check membrane parameter: included or excluded')
                 % end
                 
-                for i = 1:size(data,3)
-                    waitbar(i./size(data,3),f,'DL segmentation - slice by slice');
+                for i = 1:size(Membrane,3)
+                    waitbar(i./size(Membrane,3),f,'DL segmentation - slice by slice');
                     % label= segmentCells2D(cp,data(:,:,i), ...
                     %     ImageCellDiameter=120, ...
                     %     CellThreshold=0, ...
@@ -205,7 +205,7 @@ classdef MonolayerSegmentation < handle
                     %     Segments(segmenteroded == 1) = 1;
                     % end
                     % labelsCut(:,:,i) = Segments;
-                    labels = segmentCells2D(cp, data(:,:,i), ImageCellDiameter = 90,  CellThreshold=0, FlowErrorThreshold = 1.5);
+                    labels = segmentCells2D(cp, Membrane(:,:,i), ImageCellDiameter = 20,  CellThreshold=0, FlowErrorThreshold = 1.5);
                     result = labels;
                     for r = 1:1024
                         for c = 1:1024
@@ -213,11 +213,7 @@ classdef MonolayerSegmentation < handle
                             if currentValue == 0
                                 continue;
                             end
-                            try
-                                neighborhood = labels(r:r+2, c:c+2);
-                            catch
-                                neighborhood = labels(r-2:r, c-2:c);
-                            end
+                            neighborhood = labels(r:r+2, c:c+2);
                             if ~all(neighborhood(:) == currentValue)
                                 result(r, c) = 0;
                             end
@@ -234,7 +230,7 @@ classdef MonolayerSegmentation < handle
                 ZStack = Core.adjustSegmentIndices(labelsFull, fr);
                 %ZStackEdges = Core.DefineEdges(ZStack);
 
-                minVolume = 10000;
+                minVolume = 50000;
                 regionProps = regionprops3(ZStack, 'Volume');
                 validRegions = find(regionProps.Volume >= minVolume);
                 mask = ismember(ZStack, validRegions);
@@ -264,7 +260,7 @@ classdef MonolayerSegmentation < handle
                 if strcmp(obj.info.Membrane,'excluded')
                     [~,Membrane] = imSegmentation.segmentStack(uint16(medData),'threshold',0.5,...
                             'connectivity',9,'diskDim',2);
-                    Membrane(ZStack ~= 0) = 0;
+                    Membrane(ZStackEdges ~= 0) = 0;
                     MembraneSegment = Membrane;
                     obj.results.MembraneSegment = MembraneSegment;
                     filename = append(obj.raw.path, filesep, 'MembraneSegment.mat');
