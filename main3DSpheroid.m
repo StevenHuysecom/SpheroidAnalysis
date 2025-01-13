@@ -3,11 +3,18 @@ close all;
 clc;
 %% User Input
 file.ext  = '.lif';
+<<<<<<< HEAD
+MainFolder = {'D:\Data Uptake\AuNP@mSi@PEI'};
+DimensionFolders = {'3D'};
+HourFolders = {'24hour'};
+ParticleFolders = {'HeLa'};
+=======
 
 MainFolder = {'E:\Steven'};
 DimensionFolders = {'3D'};
 HourFolders = {'3h', '48h'};
 ParticleFolders = {'A549', 'HeLa', 'KM12C', 'MCF7'};
+>>>>>>> b1040738629b40828fc7e47f9da05a41c88761be
 
 %Give info about the channels, the word needs to be lowercase with no typos
 %care that the

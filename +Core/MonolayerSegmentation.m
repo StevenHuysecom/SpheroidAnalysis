@@ -153,31 +153,77 @@ classdef MonolayerSegmentation < handle
                 medData = medfilt3(data);
     
                 %% Intcorrection in z
-                f = waitbar(0,'Intensity Corrections');
-
-                for i = 1:size(medData,3)
-                    waitbar(i./(2*size(medData,3)),f,'Intensity Corrections');
-                    dataPlane = medData(:,:,i);
-                    MeanInt(i,1) = mean(dataPlane(:));
-                end
-                [Max, Idx] = max(MeanInt);
-                MeanIntInv = 1./MeanInt;
-                DataCorr = zeros(size(data,1), size(data,2), size(data,3));
-                for i = 1:size(DataCorr, 3)
-                    waitbar((i+size(medData,3))./(2*size(medData,3)),f,'Intensity Corrections');
-                    DataCorr(:,:,i) = data(:,:,i).*MeanIntInv(i,1);
-                end
-    
-                DataCorrBin = DataCorr;
-                DataCorrBin(DataCorrBin > 1) = 1;
-                close(f)
+                % f = waitbar(0,'Intensity Corrections');
+                % 
+                % for i = 1:size(medData,3)
+                %     waitbar(i./(2*size(medData,3)),f,'Intensity Corrections');
+                %     dataPlane = medData(:,:,i);
+                %     MeanInt(i,1) = mean(dataPlane(:));
+                % end
+                % [Max, Idx] = max(MeanInt);
+                % MeanIntInv = 1./MeanInt;
+                % DataCorr = zeros(size(data,1), size(data,2), size(data,3));
+                % for i = 1:size(DataCorr, 3)
+                %     waitbar((i+size(medData,3))./(2*size(medData,3)),f,'Intensity Corrections');
+                %     DataCorr(:,:,i) = data(:,:,i).*MeanIntInv(i,1);
+                % end
+                % 
+                % DataCorrBin = DataCorr;
+                % DataCorrBin(DataCorrBin > 1) = 1;
+                % close(f)
     
                 %% Deeplearning segmentation
+                tic
                 labelsCut = zeros(size(data));
                 labelsFull = labelsCut;
-                se = strel('square', 2);
+                labelsBin = labelsFull;
+                % se = strel('square', 2);
                 f = waitbar(0,'DL segmentation - slice by slice');
                 cp = cellpose;
+<<<<<<< HEAD
+                % if strcmp(obj.info.Membrane, 'included')
+                %     CellThreshold = 0;
+                % elseif strcmp(obj.info.Membrane, 'excluded')
+                %     CellThreshold = 10;
+                % else
+                %     error('Check membrane parameter: included or excluded')
+                % end
+                
+                for i = 1:size(data,3)
+                    waitbar(i./size(data,3),f,'DL segmentation - slice by slice');
+                    % label= segmentCells2D(cp,data(:,:,i), ...
+                    %     ImageCellDiameter=120, ...
+                    %     CellThreshold=0, ...
+                    %     FlowErrorThreshold=0.4, ...
+                    %     Tile=true,...
+                    %     TileOverlap=0.5);
+                    % labelsFull(:,:,i) = label;
+                    % Segments = zeros(size(label));
+                    % for j = 1:max(label(:))
+                    %     segment = zeros(size(label));
+                    %     segment(label == j) = 1;
+                    %     segmenteroded = imerode(segment,se);
+                    %     Segments(segmenteroded == 1) = 1;
+                    % end
+                    % labelsCut(:,:,i) = Segments;
+                    labels = segmentCells2D(cp, data(:,:,i), ImageCellDiameter = 90,  CellThreshold=0, FlowErrorThreshold = 1.5);
+                    result = labels;
+                    for r = 1:1024
+                        for c = 1:1024
+                            currentValue = labels(r, c);
+                            if currentValue == 0
+                                continue;
+                            end
+                            try
+                                neighborhood = labels(r:r+2, c:c+2);
+                            catch
+                                neighborhood = labels(r-2:r, c-2:c);
+                            end
+                            if ~all(neighborhood(:) == currentValue)
+                                result(r, c) = 0;
+                            end
+                        end
+=======
                 if strcmp(obj.info.Membrane, 'included')
                     CellThr = 0;
                 elseif strcmp(obj.info.Membrane, 'excluded')
@@ -199,15 +245,27 @@ classdef MonolayerSegmentation < handle
                         segment(label == j) = 1;
                         segmenteroded = imerode(segment,se);
                         Segments(segmenteroded == 1) = 1;
+>>>>>>> b1040738629b40828fc7e47f9da05a41c88761be
                     end
-                    labelsCut(:,:,i) = Segments;
+                    label = result;
+                    labelsFull(:,:,i) = label;
+                    labelBin = label;
+                    labelBin(labelBin ~= 0) = 1;
+                    labelsBin(:,:,i) = labelBin;
                 end
+                toc
                 close(f)
                 ZStack = Core.adjustSegmentIndices(labelsFull, fr);
-                ZStackEdges = Core.DefineEdges(ZStack);
-    
-                ws = ZStackEdges;
-    
+                %ZStackEdges = Core.DefineEdges(ZStack);
+
+                minVolume = 10000;
+                regionProps = regionprops3(ZStack, 'Volume');
+                validRegions = find(regionProps.Volume >= minVolume);
+                mask = ismember(ZStack, validRegions);
+                ws = ZStack;
+                ws(mask == 0) = 0;
+
+            
                 contour = obj.getCellContour(ws);
                 cContour = contour{1,fr};
                 figure
@@ -230,7 +288,7 @@ classdef MonolayerSegmentation < handle
                 if strcmp(obj.info.Membrane,'excluded')
                     [~,Membrane] = imSegmentation.segmentStack(uint16(medData),'threshold',0.5,...
                             'connectivity',9,'diskDim',2);
-                    Membrane(ZStackEdges ~= 0) = 0;
+                    Membrane(ZStack ~= 0) = 0;
                     MembraneSegment = Membrane;
                     obj.results.MembraneSegment = MembraneSegment;
                     filename = append(obj.raw.path, filesep, 'MembraneSegment.mat');
