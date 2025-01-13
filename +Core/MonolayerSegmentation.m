@@ -285,9 +285,8 @@ classdef MonolayerSegmentation < handle
             fr = 20;
             PartData = obj.getChannel('particles');
             mask = obj.results.cellMask;
-            labMask = bwlabeln(mask);
 
-            stats = regionprops3(labMask, 'Volume', 'VoxelIdxList');
+            stats = regionprops3(mask, 'Volume', 'VoxelIdxList');
             DeleteRows = find(stats.Volume == 0);
             stats(DeleteRows, :) = [];
             IntMatrix = zeros(size(PartData));
@@ -304,7 +303,7 @@ classdef MonolayerSegmentation < handle
             PxSizes = PxSizes.PxSizes;
             PxVolume = PxSizes(1)*PxSizes(2)*PxSizes(3);
             IntRatio = Int./(stats.Volume*PxVolume);
-            VolumeList = stats/Volume*PxVolume;
+            VolumeList = stats.Volume*PxVolume;
             
             if strcmp(obj.info.Membrane, 'excluded')
                 MembraneMask = obj.results.MembraneSegment;
@@ -318,11 +317,24 @@ classdef MonolayerSegmentation < handle
                 MembraneInt = NaN;
             end
             
-            figure()
-            imagesc(IntMatrix(:,:,fr));
+            IntVolData = table(Int, VolumeList, IntRatio, 'VariableNames', {'Int', 'Volume', 'IntDensity'});
+            filename = append(obj.raw.path, filesep, 'IntVolData.mat');
+            save(filename, 'IntVolData');
 
-            filename = append(obj.raw.path, filesep, 'MembraneSegmentation.mat');
-            save(filename, 'labMask');
+            IntVolDataMembr = table(MembraneInt, MembrPxNum*PxVolume, MembrRatio, {'Int', 'Volume', 'IntDensity'});
+            filename = append(obj.raw.path, filesep, 'IntVolDataMembr.mat');
+            save(filename, 'IntVolDataMembr');
+
+            filename = append(obj.raw.path, filesep, 'IntMatrix.mat');
+            save(filename, 'IntMatrix');
+
+            PartDensMatrix = zeros(size(IntMatrix));
+            Numbers = unique(IntMatrix);
+            for i = 1:size(Numbers, 1)
+                Intensity = Numbers(i);
+                Idx = find(Int == Intensity);
+                PartDensMatrix(find(round(PartDensMatrix, -2) == round(Intensity, -2))) = IntRatio(Idx);
+            end
         end
 
         
