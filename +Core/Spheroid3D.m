@@ -111,12 +111,18 @@ classdef Spheroid3D < handle
             membrane = obj.channels.membrane;
             waitbar(.10,f,'Calculating spheroid center - median filter');
             membrane(membrane < 10) = 0;
-            membrane = medfilt3(membrane, [21 21 21]);
+            se = strel('cube', 2);
+            membrane = imdilate(membrane, se);
+            membrane = medfilt3(membrane, [5 5 5]);
             waitbar(.20,f,'Calculating spheroid center - filling holes');
             membrane = bwareaopen(membrane, 500000);
             waitbar(.30,f,'Calculating spheroid center - filling holes');
             for i = 1:size(membrane, 3)
                 membrane(:,:,i) = imfill(membrane(:,:,i), "holes");
+                stats = regionprops(membrane(:,:,i), 'Area');
+                if max(struct2array(stats)) > 5000
+                    membrane(:,:,i) = bwareaopen(membrane(:,:,i), 5000);
+                end
             end
             waitbar(.70,f,'Calculating spheroid center - filling holes');
             membrane = imfill(membrane, "holes");
@@ -128,7 +134,12 @@ classdef Spheroid3D < handle
             end
             [~, MaxPlaneIdx] = max(Area);
             Coords = [];
-            for i = (MaxPlaneIdx - 20) : (MaxPlaneIdx + 20)
+            if MaxPlaneIdx < size(membrane,3)-20
+                RefPlane = MaxPlaneIdx;
+            else
+                RefPlane = size(membrane,3)-20;
+            end
+            for i = (RefPlane - 20) : (RefPlane + 20)
                 MaxPlane = membrane(:,:,i);
                 props = regionprops(MaxPlane, 'Centroid', 'Area');
                 [~, largestIdx] = max([props.Area]);

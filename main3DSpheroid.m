@@ -6,7 +6,7 @@ file.ext  = '.lif';
 MainFolder = {'E:\Data Uptake\AuNP@mSi@PEI'};
 DimensionFolders = {'3D'};
 HourFolders = {'3hour'};
-ParticleFolders = {'KM12C'};
+ParticleFolders = {'MCF7'};
 
 %Give info about the channels, the word needs to be lowercase with no typos
 %care that the
@@ -38,7 +38,7 @@ for m = 1:numel(DimensionFolders)
                     SpheroidInt = [];
                     IntMatrix = [-100:300].';
                     for j = 1:size(SubFolder,1)
-                        if isSubDirColumn(j,1) == 1;
+                        if isSubDirColumn(j,1) == 1
                             file.path = append(SubFolder(j).folder, filesep, SubFolder(j).name);
 
                             PxSize = load(append(file.path, filesep, 'PxSizes.mat'));
