@@ -33,11 +33,13 @@ for m = 1:numel(DimensionFolders)
                             if NewFolder(z).isdir == 1
                                 FileName = append(NewFolder(z).folder, filesep, NewFolder(z).name, filesep, 'MembraneSegmentation.mat');
                                 MembrSegm = load(FileName);
-                                MembrSegm = MembrSegm.MembraneSegmentation;
+                                MembrSegm = MembrSegm.ws;
         
                                 stats = regionprops3(MembrSegm, 'Volume');
-                                NumCell = [NumCell; size(stats, 1)];
-                                CellVolumes = [CellVolumes; stats];
+                                VolList = table2array(stats);
+                                VolList(VolList == 0) = [];
+                                NumCell = [NumCell; size(VolList, 1)];
+                                CellVolumes = [CellVolumes; VolList];
                             end
                         end 
 
@@ -79,25 +81,45 @@ for m = 1:numel(DimensionFolders)
                             Range8 = 'CE1:CE1';
                         end
             
-        
-                        writecell({ParticleFolder}, append(MainFolder{1}, filesep, 'Results2D.xlsx'), 'Sheet', HourFolder, 'Range', Range1);
-                        writematrix(NumCell, append(MainFolder{1}, filesep, 'Results2D.xlsx'), 'Sheet', HourFolder, 'Range', Range2);
-                        writetable(CellVolumes, append(MainFolder{1}, filesep, 'Results2D.xlsx'), 'Sheet', HourFolder, 'Range', Range3);
+                        %% abs intensities
+                        writecell({ParticleFolder}, append(MainFolder{1}, filesep, 'Results2D_absInt.xlsx'), 'Sheet', HourFolder, 'Range', Range1);
+                        writematrix(NumCell, append(MainFolder{1}, filesep, 'Results2D_absInt.xlsx'), 'Sheet', HourFolder, 'Range', Range2);
+                        writematrix(CellVolumes, append(MainFolder{1}, filesep, 'Results2D_absInt.xlsx'), 'Sheet', HourFolder, 'Range', Range3);
         
                         Path2Load = append(NewFolder(1).folder, filesep, 'CellInt.mat');
                         CellInt = load(Path2Load);
                         CellInt = CellInt.CellInt;
                         CellInt = CellInt(1:size(CellVolumes,1), 1);
-                        writematrix(CellInt, append(MainFolder{1}, filesep, 'Results2D.xlsx'), 'Sheet', HourFolder, 'Range', Range4);
+                        writematrix(CellInt, append(MainFolder{1}, filesep, 'Results2D_absInt.xlsx'), 'Sheet', HourFolder, 'Range', Range4);
         
-                        Path2Load2 = append(file.path, filesep, 'MembrInt.mat');
+                        Path2Load2 = append(NewFolder(1).folder, filesep, 'MembrInt.mat');
                         MembrInt = load(Path2Load2);
                         MembrInt = MembrInt.MembrInt;
-                        writematrix(MembrInt, append(MainFolder{1}, filesep, 'Results2D.xlsx'), 'Sheet', HourFolder, 'Range', Range5);
+                        writematrix(MembrInt, append(MainFolder{1}, filesep, 'Results2D_absInt.xlsx'), 'Sheet', HourFolder, 'Range', Range5);
         
-                        writecell({'Number of cells'}, append(MainFolder{1}, filesep, 'Results2D.xlsx'), 'Sheet', HourFolder, 'Range', Range6);
-                        writecell({'Cell Intensities'}, append(MainFolder{1}, filesep, 'Results2D.xlsx'), 'Sheet', HourFolder, 'Range', Range7);
-                        writecell({'Membrane Intensities'}, append(MainFolder{1}, filesep, 'Results2D.xlsx'), 'Sheet', HourFolder, 'Range', Range8);
+                        writecell({'Number of cells'}, append(MainFolder{1}, filesep, 'Results2D_absInt.xlsx'), 'Sheet', HourFolder, 'Range', Range6);
+                        writecell({'Cell Intensities'}, append(MainFolder{1}, filesep, 'Results2D_absInt.xlsx'), 'Sheet', HourFolder, 'Range', Range7);
+                        writecell({'Membrane Intensities'}, append(MainFolder{1}, filesep, 'Results2D_absInt.xlsx'), 'Sheet', HourFolder, 'Range', Range8);
+
+                        %% intensity density
+                        writecell({ParticleFolder}, append(MainFolder{1}, filesep, 'Results2D_density.xlsx'), 'Sheet', HourFolder, 'Range', Range1);
+                        writematrix(NumCell, append(MainFolder{1}, filesep, 'Results2D_density.xlsx'), 'Sheet', HourFolder, 'Range', Range2);
+                        writematrix(CellVolumes, append(MainFolder{1}, filesep, 'Results2D_density.xlsx'), 'Sheet', HourFolder, 'Range', Range3);
+        
+                        Path2Load = append(NewFolder(1).folder, filesep, 'CellDens.mat');
+                        CellDens = load(Path2Load);
+                        CellDens = CellDens.CellDens;
+                        CellDens = CellDens(1:size(CellVolumes,1), 1);
+                        writematrix(CellDens, append(MainFolder{1}, filesep, 'Results2D_density.xlsx'), 'Sheet', HourFolder, 'Range', Range4);
+        
+                        Path2Load2 = append(NewFolder(1).folder, filesep, 'MembrDens.mat');
+                        MembrDens = load(Path2Load2);
+                        MembrDens = MembrDens.MembrDens;
+                        writematrix(MembrDens, append(MainFolder{1}, filesep, 'Results2D_density.xlsx'), 'Sheet', HourFolder, 'Range', Range5);
+        
+                        writecell({'Number of cells'}, append(MainFolder{1}, filesep, 'Results2D_density.xlsx'), 'Sheet', HourFolder, 'Range', Range6);
+                        writecell({'Cell Intensities'}, append(MainFolder{1}, filesep, 'Results2D_density.xlsx'), 'Sheet', HourFolder, 'Range', Range7);
+                        writecell({'Membrane Intensities'}, append(MainFolder{1}, filesep, 'Results2D_density.xlsx'), 'Sheet', HourFolder, 'Range', Range8);
 
                     else
                     end 

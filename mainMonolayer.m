@@ -9,7 +9,7 @@ file.runSegmentation = 'run'; %load or run
 % info.pxSizeZ  = 1000;
 info.Membrane = 'excluded'; %included or excluded
 
-MainFolder = {'D:\Steven'};
+MainFolder = {'E:\Steven'};
 DimensionFolders = {'2D'};
 HourFolders = {'3hour', '24hour', '48hour'};
 CellineFolders = {'A549', 'HeLa', 'KM12C', 'MCF7'}; %

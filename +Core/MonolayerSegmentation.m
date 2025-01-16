@@ -224,7 +224,7 @@ classdef MonolayerSegmentation < handle
                 end
                 
                 ws = ZStack;
-                minVolume = 30000;
+                minVolume = 50000;
                 regionProps = regionprops3(ws, 'Volume');
                 validRegions = find(regionProps.Volume >= minVolume);
                 mask = ismember(ZStack, validRegions);
@@ -248,8 +248,8 @@ classdef MonolayerSegmentation < handle
                 end
 
 
-                for i = 1:10
-                    fr = i*6;
+                % for i = 1:10
+                    fr = 20;
                     cContour = contour{1,fr};
                     figure
                     imagesc(data(:,:,fr))
@@ -260,7 +260,7 @@ classdef MonolayerSegmentation < handle
                       hold on
                       plot(cContour{i}(:,2),cContour{i}(:,1),'w','Linewidth',2)        
                     end
-                end
+                % end
                
                 obj.results.cellContour = contour;          
                 obj.plotCellContour()           
