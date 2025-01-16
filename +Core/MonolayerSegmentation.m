@@ -118,7 +118,7 @@ classdef MonolayerSegmentation < handle
             if strcmp(obj.raw.runSegmentation, 'load')
                 disp('Found segmentation file: loading it')
                 Segmentation = load(SegmentationFile);
-                ws = Segmentation.MembraneSegmentation;
+                ws = Segmentation.ws;
                 data = obj.getChannel('membrane');
 
                 contour = obj.getCellContour(ws);

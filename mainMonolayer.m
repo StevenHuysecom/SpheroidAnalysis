@@ -3,7 +3,7 @@ close all;
 clc;
 %% User Input
 file.ext  = '.lif';
-file.runSegmentation = 'run'; %load or run
+file.runSegmentation = 'load'; %load or run
 
 % info.pxSizeXY = 454.5; 
 % info.pxSizeZ  = 1000;
@@ -11,8 +11,8 @@ info.Membrane = 'excluded'; %included or excluded
 
 MainFolder = {'E:\Steven'};
 DimensionFolders = {'2D'};
-HourFolders = {'3hour', '24hour', '48hour'};
-CellineFolders = {'A549', 'HeLa', 'KM12C', 'MCF7'}; %
+HourFolders = {'24hour', '48hour'};
+CellineFolders = {'MCF7'}; %
 
 %Give info about the channels, the word needs to be lowercase with no typos
 %care that the
@@ -28,7 +28,7 @@ for m = 1:numel(DimensionFolders)
     for a = 1:numel(HourFolders)
         HourFolder = HourFolders{a};
         for r = 1:numel(CellineFolders)
-            try
+            %try
                 CellineFolder = CellineFolders{r};
                 Path = append(MainFolder, filesep, DimensionFolder, filesep, HourFolder,...
                     filesep, CellineFolder);
@@ -41,7 +41,7 @@ for m = 1:numel(DimensionFolders)
                 isDirColumn = [CurrentFolder.isdir]';
                 for i = 1:size(CurrentFolder,1)
                     if isDirColumn(i,1) == 1
-                        try
+                        %try
                             SubFolder = dir(append(CurrentFolder(i).folder, filesep, CurrentFolder(i).name));
                             SubFolder(1:2) = [];
                             isSubDirColumn = [SubFolder.isdir]';
@@ -51,7 +51,7 @@ for m = 1:numel(DimensionFolders)
                             MembrDens = [];
                             VolumeList = [];
                             for j = 1:size(SubFolder,1)
-                                try
+                                %try
                                     if isSubDirColumn(j,1) == 1
                                         file.path = append(SubFolder(j).folder, filesep, SubFolder(j).name);
                         
@@ -70,9 +70,9 @@ for m = 1:numel(DimensionFolders)
                                         MembrDens = [MembrDens; MembrIntRatio];
                                         VolumeList = [VolumeList; Volume];
                                     end
-                                catch
-                                    continue
-                                end
+                                % catch
+                                %     continue
+                                % end
                             end
                             filenameCell = append(SubFolder(1).folder, filesep,'CellInt.mat');
                             filenameMembr = append(SubFolder(1).folder, filesep,'MembrInt.mat');
@@ -85,14 +85,14 @@ for m = 1:numel(DimensionFolders)
                             save(filenameMembrDens, 'MembrDens');
                             save(filenameVolume, 'VolumeList');
                             close all
-                        catch
-                            continue
-                        end
+                        % catch
+                        %     continue
+                        % end
                     end
                 end
-            catch
-                continue
-            end
+            % catch
+            %     continue
+            % end
         end
     end
 end
