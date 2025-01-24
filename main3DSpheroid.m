@@ -3,9 +3,9 @@ close all;
 clc;
 %% User Input
 file.ext  = '.lif';
-MainFolder = {'E:\Data Uptake\AuNP@mSi@PEI'};
-DimensionFolders = {'3D'};
-HourFolders = {'3hour'};
+MainFolder = {'F:\Data Uptake\AuNP@mSi@PEI'};
+DimensionFolders = {'ToDoList'};
+HourFolders = {'48hour'};
 ParticleFolders = {'MCF7'};
 
 %Give info about the channels, the word needs to be lowercase with no typos
@@ -20,61 +20,70 @@ for m = 1:numel(DimensionFolders)
     for a = 1:numel(HourFolders)
         HourFolder = HourFolders{a};
         for r = 1:numel(ParticleFolders)
-            ParticleFolder = ParticleFolders{r};
-            Path = append(MainFolder, filesep, DimensionFolder, filesep, HourFolder,...
-                filesep, ParticleFolder);
-            file.path = Path{1,1};
-
-            Load.Movie.lif.LoadImages(file, chan);
-            CurrentFolder = dir(file.path);
-            CurrentFolder(1:2) = [];
-            isDirColumn = [CurrentFolder.isdir]';
-
-            for i = 1:size(CurrentFolder,1)
-                if isDirColumn(i,1) == 1;
-                    SubFolder = dir(append(CurrentFolder(i).folder, filesep, CurrentFolder(i).name));
-                    SubFolder(1:2) = [];
-                    isSubDirColumn = [SubFolder.isdir]';
-                    SpheroidInt = [];
-                    IntMatrix = [-100:300].';
-                    for j = 1:size(SubFolder,1)
-                        if isSubDirColumn(j,1) == 1
-                            file.path = append(SubFolder(j).folder, filesep, SubFolder(j).name);
-
-                            PxSize = load(append(file.path, filesep, 'PxSizes.mat'));
-                            info.pxSizeXY = PxSize.PxSizes(1);
-                            info.pxSizeZ  = PxSize.PxSizes(3);
-                            stack = Core.Spheroid3D(file,info);
-                            stack.loadDataBioform(chan);
-                            stack.showChannel;
-                            
-                            %% Find center of spheroid
-                            stack.findCenter;
-                            
-                            %% Change to ellipsoid coordinates
-                            stack.CartToEllipsoid;
+            try
+                ParticleFolder = ParticleFolders{r};
+                Path = append(MainFolder, filesep, DimensionFolder, filesep, HourFolder,...
+                    filesep, ParticleFolder);
+                file.path = Path{1,1};
+    
+                Load.Movie.lif.LoadImages(file, chan);
+                CurrentFolder = dir(file.path);
+                CurrentFolder(1:2) = [];
+                isDirColumn = [CurrentFolder.isdir]';
+    
+                for i = 1:size(CurrentFolder,1)
+                    try
+                        if isDirColumn(i,1) == 1
+                            SubFolder = dir(append(CurrentFolder(i).folder, filesep, CurrentFolder(i).name));
+                            SubFolder(1:2) = [];
+                            isSubDirColumn = [SubFolder.isdir]';
+                            SpheroidInt = [];
+                            IntMatrix = [-100:300].';
+                            for j = 1:size(SubFolder,1)
+                                try
+                                    if isSubDirColumn(j,1) == 1
+                                        file.path = append(SubFolder(j).folder, filesep, SubFolder(j).name);
             
-                            %% Integrate over r
-                            [IntDepth] = stack.IntegrateR;
-                            for l = 1:size(IntDepth, 1)
-                                pos = IntDepth(l, 1);  
-                                value = IntDepth(l, 2); 
-                                rowIndex = find(IntMatrix == pos, 1);  
-                                if ~isempty(rowIndex)                   
-                                    IntMatrix(rowIndex, j+1) = value;   
+                                        PxSize = load(append(file.path, filesep, 'PxSizes.mat'));
+                                        info.pxSizeXY = PxSize.PxSizes(1);
+                                        info.pxSizeZ  = PxSize.PxSizes(3);
+                                        stack = Core.Spheroid3D(file,info);
+                                        stack.loadDataBioform(chan);
+                                        stack.showChannel;
+                                        
+                                        %% Find center of spheroid
+                                        stack.findCenter;
+                                        
+                                        %% Change to ellipsoid coordinates
+                                        stack.CartToEllipsoid;
+                        
+                                        %% Integrate over r
+                                        [IntDepth] = stack.IntegrateR;
+                                        for l = 1:size(IntDepth, 1)
+                                            pos = IntDepth(l, 1);  
+                                            value = IntDepth(l, 2); 
+                                            rowIndex = find(IntMatrix == pos, 1);  
+                                            if ~isempty(rowIndex)                   
+                                                IntMatrix(rowIndex, j+1) = value;   
+                                            end
+                                        end
+            
+                                        %% Get full spheroid intensity uptake
+                                        [TotInt] = stack.GetFullInt;
+                                        SpheroidInt = [SpheroidInt, TotInt];
+                                    end
+                                catch 
                                 end
                             end
-
-                            %% Get full spheroid intensity uptake
-                            [TotInt] = stack.GetFullInt;
-                            SpheroidInt = [SpheroidInt, TotInt];
+                            filename = append(SubFolder(1).folder, filesep,'IntMatrix.mat');
+                            save(filename, 'IntMatrix');
+                            filename = append(SubFolder(1).folder, filesep,'SpheroidIntTotal.mat');
+                            save(filename, 'SpheroidInt');
                         end
+                    catch
                     end
-                    filename = append(SubFolder(1).folder, filesep,'IntMatrix.mat');
-                    save(filename, 'IntMatrix');
-                    filename = append(SubFolder(1).folder, filesep,'SpheroidIntTotal.mat');
-                    save(filename, 'SpheroidInt');
                 end
+            catch
             end
         end
     end
