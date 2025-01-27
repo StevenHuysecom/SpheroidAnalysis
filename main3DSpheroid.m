@@ -39,7 +39,7 @@ for m = 1:numel(DimensionFolders)
                             isSubDirColumn = [SubFolder.isdir]';
                             SpheroidInt = [];
                             IntMatrix = [-100:300].';
-                            for j = 1:size(SubFolder,1)
+                            for j = 19; %1:size(SubFolder,1)
                                 try
                                     if isSubDirColumn(j,1) == 1
                                         file.path = append(SubFolder(j).folder, filesep, SubFolder(j).name);
