@@ -3,10 +3,10 @@ close all;
 clc;
 %% User Input
 file.ext  = '.lif';
-MainFolder = {'F:\Data Uptake\AuNP@mSi@PEI'};
-DimensionFolders = {'ToDoList'};
-HourFolders = {'48hour'};
-ParticleFolders = {'MCF7'};
+MainFolder = {'D:\Steven\Data Uptake\AuNP@mSi@PEI'};
+DimensionFolders = {'2D'};
+HourFolders = {'24hour'};
+ParticleFolders = {'HeLa_24h_27_Jan'};
 
 %Give info about the channels, the word needs to be lowercase with no typos
 %care that the
@@ -39,7 +39,7 @@ for m = 1:numel(DimensionFolders)
                             isSubDirColumn = [SubFolder.isdir]';
                             SpheroidInt = [];
                             IntMatrix = [-100:300].';
-                            for j = 19; %1:size(SubFolder,1)
+                            for j = 1:size(SubFolder,1)
                                 try
                                     if isSubDirColumn(j,1) == 1
                                         file.path = append(SubFolder(j).folder, filesep, SubFolder(j).name);
