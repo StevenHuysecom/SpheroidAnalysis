@@ -3,10 +3,10 @@ close all;
 clc;
 %% User Input
 file.ext  = '.lif';
-MainFolder = {'D:\Steven\Data Uptake\AuNP@mSi@PEI'};
-DimensionFolders = {'2D'};
-HourFolders = {'24hour'};
-ParticleFolders = {'HeLa_24h_27_Jan'};
+MainFolder = {'F:\Data Uptake\AuNP@mSi@PEI'};
+DimensionFolders = {'3D'};
+HourFolders = {'3hour', '6hour', '24hour', '48hour'};
+ParticleFolders = {'HeLa'};
 
 %Give info about the channels, the word needs to be lowercase with no typos
 %care that the
