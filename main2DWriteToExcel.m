@@ -3,9 +3,9 @@ close all;
 clc;
 %% User Input
 file.ext  = '.lif';
-MainFolder = {'E:\Steven'};
+MainFolder = {'F:\Data Uptake\AuNP@mSi@PEI'};
 DimensionFolders = {'2D'};
-HourFolders = {'3hour', '24hour', '48hour'};
+HourFolders = {'3hour'};
 ParticleFolders = {'A549', 'HeLa', 'KM12C', 'MCF7'};
 
 BigMatrix = [];

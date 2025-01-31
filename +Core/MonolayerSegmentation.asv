@@ -324,7 +324,7 @@ classdef MonolayerSegmentation < handle
             
             if strcmp(obj.info.Membrane, 'excluded')
                 MembraneMask = obj.results.MembraneSegment;
-                MembranePart = PartData(:,:,fr);
+                MembranePart = PartData;
                 MembranePart(MembraneMask ~= 1) = 0;
                 MembraneInt = sum(MembranePart(:));
 
