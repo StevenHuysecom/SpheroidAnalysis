@@ -81,5 +81,7 @@ end
 OMEXMLService = javaObject('loci.formats.services.OMEXMLServiceImpl');
 r.setMetadataStore(OMEXMLService.createOMEXMLMetadata());
 
-% Initialize the reader
-if ~isempty(id), r.setId(id); end
+%Initialize the reader
+if ~isempty(id)
+    r.setId(id); 
+end
