@@ -5,7 +5,7 @@ clc;
 file.ext  = '.lif';
 MainFolder = {'D:\Steven'};
 DimensionFolders = {'2D'};
-HourFolders = {'3hour', '24hour', '48hour'};
+HourFolders = {'3hour', '24hour', '48hour'}; %
 ParticleFolders = {'A549', 'HeLa', 'KM12C', 'MCF7'};
 
 BigMatrix = [];
@@ -14,9 +14,9 @@ for m = 1:numel(DimensionFolders)
     DimensionFolder = DimensionFolders{m};
     for a = 1:numel(HourFolders)
         HourFolder = HourFolders{a};
-        % SliceMatrix = readmatrix(append(MainFolder{1,1}, filesep, DimensionFolder, filesep, 'Slices.xlsx'), 'Sheet', HourFolder);
+        SliceMatrix = readmatrix(append(MainFolder{1,1}, filesep, DimensionFolder, filesep, 'Slices.xlsx'), 'Sheet', HourFolder);
         for r = 1:numel(ParticleFolders)
-            % try
+            try
                 ParticleFolder = ParticleFolders{r};
                 Path = append(MainFolder, filesep, DimensionFolder, filesep, HourFolder,...
                     filesep, ParticleFolder);
@@ -28,6 +28,7 @@ for m = 1:numel(DimensionFolders)
                 CellVolumes = [];
                 CellInt = [];
                 CellDens = [];
+                DeleteValues = [];
                 for i = 3:size(Folder,1)
                     if Folder(i).isdir == 1
                         NewFolder = append(Folder(i).folder, filesep, Folder(i).name);
@@ -38,19 +39,27 @@ for m = 1:numel(DimensionFolders)
                                 MembrSegm = load(FileName);
                                 MembrSegm = MembrSegm.ws;
 
-                                % Position = NewFolder(z).name;
-                                % x = str2num(Position(9:end));
-                                % 
-                                % Slice = SliceMatrix(x, r);
+                                Position = NewFolder(z).name;
+                                x = str2num(Position(9:end));
+
+                                Slice = SliceMatrix(x, r);
+
+                                if isnan(Slice)
+                                    DeleteValues(end+1,1) = 1;
+                                else
+                                    DeleteValues(end+1,1) = 0;
+                                end
+                                
 
                                 stats = regionprops(MembrSegm, 'Area');
                                 VolList = (struct2array(stats)).';
                                 VolList(VolList < 2700) = [];
                                 NumCell = [NumCell; size(VolList, 1)];
-                                % CellVolumes = [CellVolumes; VolList];
+                                CellVolumes = [CellVolumes; VolList];
                             end
                         end 
-        
+                        
+                        NumCell(DeleteValues == 1) = [];
                         Check = sum(NumCell);
                         CellVolumes = load(append(NewFolder(1).folder, filesep, "VolumeList.mat"));
                         CellVolumes = CellVolumes.VolumeList;
@@ -105,7 +114,7 @@ for m = 1:numel(DimensionFolders)
                         Path2Load = append(NewFolder(1).folder, filesep, 'CellInt.mat');
                         CellInt = load(Path2Load);
                         CellInt = CellInt.CellInt;
-                        % CellInt = CellInt(1:end, 1);
+                        CellInt = CellInt(1:end, 1);
                         writematrix(CellInt, append(MainFolder{1}, filesep, 'Results2D_absInt.xlsx'), 'Sheet', HourFolder, 'Range', Range4);
         
                         Path2Load2 = append(NewFolder(1).folder, filesep, 'MembrInt.mat');
@@ -142,8 +151,8 @@ for m = 1:numel(DimensionFolders)
                     else
                     end 
                 end     
-            % catch
-            % end
+            catch
+            end
         end
     end
 end

@@ -11,7 +11,7 @@ info.Membrane = 'excluded'; %included or excluded
 
 MainFolder = {'D:\Steven'};
 DimensionFolders = {'2D'};
-HourFolders = {'3hour', '24hour', '48hour'};
+HourFolders = {'24hour', '48hour'};%'3hour', 
 CellineFolders = {'A549', 'HeLa', 'KM12C', 'MCF7'};
 
 %Give info about the channels, the word needs to be lowercase with no typos
