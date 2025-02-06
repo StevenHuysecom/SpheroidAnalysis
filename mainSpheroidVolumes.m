@@ -3,7 +3,7 @@ close all;
 clc;
 %% User Input
 file.ext  = '.lif';
-MainFolder = {'F:\Data Uptake\AuNP@mSi@PEI'};
+MainFolder = {'D:\Data Uptake\AuNP@mSi@PEI'};
 DimensionFolders = {'3D'};
 HourFolders = {'3hour', '6hour', '24hour', '48hour'};
 ParticleFolders = {'A549', 'Hela', 'KM12C', 'MCF7'};
@@ -32,8 +32,10 @@ for m = 1:numel(DimensionFolders)
                                     waitbar(0.2, f, 'Thresholding');
                                     membrane(membrane < 10) = 0;
                                     waitbar(0.3, f, 'dilation');
-                                    se = strel('cube', 2);
-                                    membrane = imdilate(membrane, se);
+                                    if r ~= 2
+                                        se = strel('cube', 2);
+                                        membrane = imdilate(membrane, se);
+                                    end
                                     waitbar(0.5, f, 'medfilt');
                                     membrane = medfilt3(membrane, [5 5 5]);
                                     waitbar(0.6 ,f, 'closing gaps');
