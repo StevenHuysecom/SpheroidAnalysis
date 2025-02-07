@@ -3,10 +3,10 @@ close all;
 clc;
 %% User Input
 file.ext  = '.lif';
-MainFolder = {'F:\Data Uptake\AuNP@mSi@PEI'};
-DimensionFolders = {'3D'};
-HourFolders = {'3hour', '6hour', '24hour', '48hour'};
-ParticleFolders = {'HeLa'};
+MainFolder = {'E:'};
+DimensionFolders = {''};
+HourFolders = {''};
+ParticleFolders = {'MCF7_preincubation', 'MCF7_standard'};
 
 %Give info about the channels, the word needs to be lowercase with no typos
 %care that the
@@ -15,15 +15,16 @@ chan.ch02 = 'Particles';
 chan.ch03 = 'ignore';
 chan.ch04 = 'ignore';
 
-for m = 1:numel(DimensionFolders)
-    DimensionFolder = DimensionFolders{m};
-    for a = 1:numel(HourFolders)
-        HourFolder = HourFolders{a};
+% for m = 1:numel(DimensionFolders)
+    % DimensionFolder = DimensionFolders{m};
+    % for a = 1:numel(HourFolders)
+    %     HourFolder = HourFolders{a};
         for r = 1:numel(ParticleFolders)
             try
                 ParticleFolder = ParticleFolders{r};
-                Path = append(MainFolder, filesep, DimensionFolder, filesep, HourFolder,...
-                    filesep, ParticleFolder);
+                % %Path = append(MainFolder, filesep, DimensionFolder, filesep, HourFolder,...
+                %     filesep, ParticleFolder);
+                Path = append(MainFolder, filesep, ParticleFolder);
                 file.path = Path{1,1};
     
                 Load.Movie.lif.LoadImages(file, chan);
@@ -86,5 +87,5 @@ for m = 1:numel(DimensionFolders)
             catch
             end
         end
-    end
-end
+%     end
+% end
