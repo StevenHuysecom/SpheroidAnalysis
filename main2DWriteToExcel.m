@@ -5,7 +5,7 @@ clc;
 file.ext  = '.lif';
 MainFolder = {'E:\Steven'};
 DimensionFolders = {'2D'};
-HourFolders = {'3hour', '24hour', '48hour'}; %
+HourFolders = {'3hour', '6hour', '24hour', '48hour'}; %
 ParticleFolders = {'A549', 'HeLa', 'KM12C', 'MCF7'};
 
 BigMatrix = [];
@@ -16,7 +16,7 @@ for m = 1:numel(DimensionFolders)
         HourFolder = HourFolders{a};
         SliceMatrix = readmatrix(append(MainFolder{1,1}, filesep, DimensionFolder, filesep, 'Slices.xlsx'), 'Sheet', HourFolder);
         for r = 1:numel(ParticleFolders)
-            % try
+            %try
                 ParticleFolder = ParticleFolders{r};
                 Path = append(MainFolder, filesep, DimensionFolder, filesep, HourFolder,...
                     filesep, ParticleFolder);
@@ -34,28 +34,31 @@ for m = 1:numel(DimensionFolders)
                         NewFolder = append(Folder(i).folder, filesep, Folder(i).name);
                         NewFolder = dir(NewFolder);
                         for z = 3:size(NewFolder, 1)
-                            if NewFolder(z).isdir == 1
-                                FileName = append(NewFolder(z).folder, filesep, NewFolder(z).name, filesep, 'MembraneSegmentation.mat');
-                                MembrSegm = load(FileName);
-                                MembrSegm = MembrSegm.ws;
-
-                                Position = NewFolder(z).name;
-                                x = str2num(Position(9:end));
-
-                                Slice = SliceMatrix(x, r);
-
-                                if isnan(Slice)
-                                    DeleteValues(end+1,1) = 1;
-                                else
-                                    DeleteValues(end+1,1) = 0;
+                            try
+                                if NewFolder(z).isdir == 1
+                                    FileName = append(NewFolder(z).folder, filesep, NewFolder(z).name, filesep, 'MembraneSegmentation.mat');
+                                    MembrSegm = load(FileName);
+                                    MembrSegm = MembrSegm.ws;
+    
+                                    Position = NewFolder(z).name;
+                                    x = str2num(Position(9:end));
+    
+                                    Slice = SliceMatrix(x, r);
+    
+                                    if isnan(Slice)
+                                        DeleteValues(end+1,1) = 1;
+                                    else
+                                        DeleteValues(end+1,1) = 0;
+                                    end
+                                    
+    
+                                    stats = regionprops(MembrSegm, 'Area');
+                                    VolList = (struct2array(stats)).';
+                                    VolList(VolList < 2700) = [];
+                                    NumCell = [NumCell; size(VolList, 1)];
+                                    CellVolumes = [CellVolumes; VolList];
                                 end
-                                
-
-                                stats = regionprops(MembrSegm, 'Area');
-                                VolList = (struct2array(stats)).';
-                                VolList(VolList < 2700) = [];
-                                NumCell = [NumCell; size(VolList, 1)];
-                                CellVolumes = [CellVolumes; VolList];
+                            catch
                             end
                         end 
                         
@@ -144,8 +147,8 @@ for m = 1:numel(DimensionFolders)
                         writematrix(MembrDens, append(MainFolder{1}, filesep, 'Results2D_density.xlsx'), 'Sheet', HourFolder, 'Range', Range5);
         
                         writecell({'Number of cells'}, append(MainFolder{1}, filesep, 'Results2D_density.xlsx'), 'Sheet', HourFolder, 'Range', Range6);
-                        writecell({'Cell Intensities'}, append(MainFolder{1}, filesep, 'Results2D_density.xlsx'), 'Sheet', HourFolder, 'Range', Range7);
-                        writecell({'Membrane Intensities'}, append(MainFolder{1}, filesep, 'Results2D_density.xlsx'), 'Sheet', HourFolder, 'Range', Range8);
+                        writecell({'Cell Densities'}, append(MainFolder{1}, filesep, 'Results2D_density.xlsx'), 'Sheet', HourFolder, 'Range', Range7);
+                        writecell({'Membrane Densities'}, append(MainFolder{1}, filesep, 'Results2D_density.xlsx'), 'Sheet', HourFolder, 'Range', Range8);
                         writecell({'Cell Volumes'}, append(MainFolder{1}, filesep, 'Results2D_density.xlsx'), 'Sheet', HourFolder, 'Range', Range9);
 
                     else

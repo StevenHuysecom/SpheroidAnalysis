@@ -1,7 +1,7 @@
 close all
-OutputFolder = "F:\Data Uptake\AuNP@mSi@PEI\3D\48hour\SI_figures\MCF7";
+OutputFolder = "E:\Steven";
 
-%%% save membrane figure
+%% save membrane figure
 f = figure()
 set(f, 'Position', get(0, 'Screensize'));
 imagesc(rot90(squeeze(Membrane(:, 512, :)), -1));
@@ -17,11 +17,11 @@ colormap('hot')
 axis image
 saveas(g, append(OutputFolder, filesep, 'Particles.png'));
 
-%%% save filled segment figure
+%% save filled segment figure
 membrane = Membrane;
 membrane(membrane < 10) = 0;
-% se = strel('cube', 2);
-% membrane = imdilate(membrane, se);
+se = strel('cube', 2);
+membrane = imdilate(membrane, se);
 membrane = medfilt3(membrane, [5 5 5]);
 membrane = bwareaopen(membrane, 500000);
 for i = 1:size(membrane, 3)
@@ -46,7 +46,7 @@ axis image;
 hold off;
 saveas(h, append(OutputFolder, filesep, 'Membrane_filled.png'));
 
-%%% save edge image + with center
+%% save edge image + with center
 SpheroidEdge = edge3(membrane, "sobel", 0.5);
 for i = 1:size(membrane, 3)
     Area(i) = sum(membrane(:,:,i), 'all');
@@ -68,7 +68,7 @@ Center3D = round([mean(Coords, 1), MaxPlaneIdx]);
 SegmentPlane = rot90(squeeze(membrane(:,512,:)), -1);
 SegmentPlane = bwareaopen(SegmentPlane, 30000);
 stats = regionprops(SegmentPlane, "Centroid");
-Center = [Center3D(3), round(stats.Centroid(1))];
+Center = [Center3D(3), round(stats(1).Centroid)];
 j = figure();
 set(j, 'Position', get(0, 'Screensize'));
 bg = rot90(squeeze(Membrane(:, 512, :)), -1);
@@ -83,6 +83,11 @@ set(j2, 'AlphaData', overlay);
 axis image;
 hold on;
 saveas(j, append(OutputFolder, filesep, 'Membrane_edge.png'));
+
+
+
+
+
 
 %%% particle image with arrow
 figure()
@@ -135,11 +140,11 @@ binaryImage = rot90(squeeze(SpheroidEdge(:, 512, :)), -1);
 while x > 1 && x < size(binaryImage, 2) && y > 1 && y < size(binaryImage, 1)
     xi = round(x);
     yi = round(y);
-    
+
     if binaryImage(yi, xi) > 0
         break;
     end
-    
+
     x = x + stepSize * dx;
     y = y + stepSize * dy;
 end
@@ -199,11 +204,11 @@ binaryImage = rot90(squeeze(SpheroidEdge(:, 512, :)), -1);
 while x > 1 && x < size(binaryImage, 2) && y > 1 && y < size(binaryImage, 1)
     xi = round(x);
     yi = round(y);
-    
+
     if binaryImage(yi, xi) > 0
         break;
     end
-    
+
     x = x + stepSize * dx;
     y = y + stepSize * dy;
 end

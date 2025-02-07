@@ -9,10 +9,10 @@ file.runSegmentation = 'run'; %load or run
 % info.pxSizeZ  = 1000;
 info.Membrane = 'excluded'; %included or excluded
 
-MainFolder = {'D:\Steven'};
+MainFolder = {'E:\Steven'};
 DimensionFolders = {'2D'};
-HourFolders = {'24hour', '48hour'};%'3hour', 
-CellineFolders = {'A549', 'HeLa', 'KM12C', 'MCF7'};
+HourFolders = {'6hour'};%'3hour', '24hour', '48hour'
+CellineFolders = {'', '', '', 'MCF7'};
 
 %Give info about the channels, the word needs to be lowercase with no typos
 %care that the
