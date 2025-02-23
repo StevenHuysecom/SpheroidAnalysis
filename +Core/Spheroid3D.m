@@ -111,8 +111,8 @@ classdef Spheroid3D < handle
             membrane = obj.channels.membrane;
             waitbar(.10,f,'Calculating spheroid center - median filter');
             membrane(membrane < 10) = 0;
-            se = strel('cube', 2);
-            membrane = imdilate(membrane, se);
+            % se = strel('cube', 2);
+            % membrane = imdilate(membrane, se);
             membrane = medfilt3(membrane, [5 5 5]);
             waitbar(.20,f,'Calculating spheroid center - filling holes');
             membrane = bwareaopen(membrane, 500000);

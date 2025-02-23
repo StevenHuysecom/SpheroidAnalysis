@@ -3,10 +3,10 @@ close all;
 clc;
 %% User Input
 file.ext  = '.lif';
-MainFolder = {'D:\Data Uptake\AuNP@mSi@PEI'};
+MainFolder = {'D:\Steven\Au@mSi'};
 DimensionFolders = {'3D'};
-HourFolders = {'3hour', '6hour', '24hour', '48hour'};
-ParticleFolders = {'A549', 'Hela', 'KM12C', 'MCF7'};
+HourFolders = {'48hour'};
+ParticleFolders = {'A549', 'KM12C', 'MCF7'};
 
 for m = 1:numel(DimensionFolders)
     for a = 1:numel(HourFolders)

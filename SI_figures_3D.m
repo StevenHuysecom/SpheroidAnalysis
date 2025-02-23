@@ -1,5 +1,5 @@
 close all
-OutputFolder = "E:\Steven";
+OutputFolder = "D:\Steven\Au@mSi@PEI\3D\48hour\SI_figures_part2\MCF7";
 
 %% save membrane figure
 f = figure()
@@ -20,8 +20,8 @@ saveas(g, append(OutputFolder, filesep, 'Particles.svg'));
 %% save filled segment figure
 membrane = Membrane;
 membrane(membrane < 10) = 0;
-se = strel('cube', 2);
-membrane = imdilate(membrane, se);
+% se = strel('cube', 2);
+% membrane = imdilate(membrane, se);
 membrane = medfilt3(membrane, [5 5 5]);
 membrane = bwareaopen(membrane, 500000);
 for i = 1:size(membrane, 3)
@@ -32,7 +32,7 @@ for i = 1:size(membrane, 3)
     end
 end
 membrane = imfill(membrane, "holes");
-h = figure()
+h = figure();
 set(h, 'Position', get(0, 'Screensize'));
 bg = rot90(squeeze(Membrane(:, 512, :)), -1);
 h1 = imagesc(bg);
