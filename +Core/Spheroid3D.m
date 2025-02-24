@@ -110,24 +110,30 @@ classdef Spheroid3D < handle
             f = waitbar(0,'Calculating spheroid center - loading');
             membrane = obj.channels.membrane;
             waitbar(.10,f,'Calculating spheroid center - median filter');
-            membrane(membrane < 10) = 0;
-            se = strel('cube', 2);
-            membrane = imdilate(membrane, se);
-            membrane = medfilt3(membrane, [5 5 5]);
+            %membrane(membrane < 10) = 0;
+            % se = strel('cube', 2);
+            % membrane = imdilate(membrane, se);
+            %membrane = medfilt3(membrane, [5 5 5]);
+            membrane = imgaussfilt3(membrane, [3 3 3]);
             waitbar(.20,f,'Calculating spheroid center - filling holes');
-            membrane = bwareaopen(membrane, 500000);
+            %membrane = bwareaopen(membrane, 500000);
             waitbar(.30,f,'Calculating spheroid center - filling holes');
+            membrane(membrane <= 3) = 0;
+            membrane(membrane > 3) = 1;
             for i = 1:size(membrane, 3)
                 membrane(:,:,i) = imfill(membrane(:,:,i), "holes");
                 stats = regionprops(membrane(:,:,i), 'Area');
-                if max(struct2array(stats)) > 5000
+                if i > 240
+                    membrane(:,:,i) = bwareaopen(membrane(:,:,i), 10000);
+                elseif max(struct2array(stats)) > 5000
                     membrane(:,:,i) = bwareaopen(membrane(:,:,i), 5000);
                 end
             end
             waitbar(.70,f,'Calculating spheroid center - filling holes');
-            membrane = imfill(membrane, "holes");
+            %membrane = imfill(membrane, "holes");
             waitbar(.80,f,'Calculating spheroid center - edge detection');
-            SpheroidEdge = edge3(membrane, "sobel", 0.5);
+            %SpheroidEdge = edge3(membrane, "sobel", 0.5);
+            SpheroidEdge = edge3(membrane, "approxcanny", 0.5);
             waitbar(.90,f,'Calculating spheroid center - sphere/ellipsoid fitting');
             for i = 1:size(membrane, 3)
                 Area(i) = sum(membrane(:,:,i), 'all');
