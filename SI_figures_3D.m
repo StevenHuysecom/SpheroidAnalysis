@@ -1,23 +1,23 @@
 close all
-OutputFolder = "F:\Data Uptake\AuNP@mSi@PEI\3D\48hour\SI_figures\MCF7";
+OutputFolder = "D:\Steven\Au@mSi@PEI\3D\48hour\SI_figures_part2\MCF7";
 
-%%% save membrane figure
+%% save membrane figure
 f = figure()
 set(f, 'Position', get(0, 'Screensize'));
 imagesc(rot90(squeeze(Membrane(:, 512, :)), -1));
-colormap('hot')
+colormap('gray')
 axis image
-saveas(f, append(OutputFolder, filesep, 'Membrane.png'));
+saveas(f, append(OutputFolder, filesep, 'Membrane.svg'));
 
 %%% save particle figure
 g = figure()
 set(g, 'Position', get(0, 'Screensize'));
 imagesc(rot90(squeeze(Particles(:, 512, :)), -1));
-colormap('hot')
+colormap('gray')
 axis image
-saveas(g, append(OutputFolder, filesep, 'Particles.png'));
+saveas(g, append(OutputFolder, filesep, 'Particles.svg'));
 
-%%% save filled segment figure
+%% save filled segment figure
 membrane = Membrane;
 membrane(membrane < 10) = 0;
 % se = strel('cube', 2);
@@ -32,11 +32,11 @@ for i = 1:size(membrane, 3)
     end
 end
 membrane = imfill(membrane, "holes");
-h = figure()
+h = figure();
 set(h, 'Position', get(0, 'Screensize'));
 bg = rot90(squeeze(Membrane(:, 512, :)), -1);
 h1 = imagesc(bg);
-colormap('hot');
+colormap('gray');
 hold on;
 overlay = rot90(squeeze(membrane(:, 512, :)), -1);
 yellowOverlay = cat(3, ones(size(overlay)), ones(size(overlay)), zeros(size(overlay)));
@@ -44,9 +44,9 @@ j2 = imagesc(yellowOverlay);
 set(j2, 'AlphaData', overlay);
 axis image;
 hold off;
-saveas(h, append(OutputFolder, filesep, 'Membrane_filled.png'));
+saveas(h, append(OutputFolder, filesep, 'Membrane_filled.svg'));
 
-%%% save edge image + with center
+%% save edge image + with center
 SpheroidEdge = edge3(membrane, "sobel", 0.5);
 for i = 1:size(membrane, 3)
     Area(i) = sum(membrane(:,:,i), 'all');
@@ -68,12 +68,12 @@ Center3D = round([mean(Coords, 1), MaxPlaneIdx]);
 SegmentPlane = rot90(squeeze(membrane(:,512,:)), -1);
 SegmentPlane = bwareaopen(SegmentPlane, 30000);
 stats = regionprops(SegmentPlane, "Centroid");
-Center = [Center3D(3), round(stats.Centroid(1))];
+Center = [Center3D(3), round(stats(1).Centroid)];
 j = figure();
 set(j, 'Position', get(0, 'Screensize'));
 bg = rot90(squeeze(Membrane(:, 512, :)), -1);
 j1 = imagesc(bg);
-colormap('hot');
+colormap('gray');
 hold on;
 overlay = rot90(squeeze(SpheroidEdge(:, 512, :)), -1);
 overlay(Center(1)-2:Center(1)+2, Center(2)-4:Center(2)+4) = 1;
@@ -82,12 +82,17 @@ j2 = imagesc(yellowOverlay);
 set(j2, 'AlphaData', overlay);
 axis image;
 hold on;
-saveas(j, append(OutputFolder, filesep, 'Membrane_edge.png'));
+saveas(j, append(OutputFolder, filesep, 'Membrane_edge.svg'));
+
+
+
+
+
 
 %%% particle image with arrow
 figure()
 imagesc(rot90(squeeze(Particles(:, 512, :)), -1));
-colormap('hot')
+colormap('gray')
 title('Click on a point in the image');
 [x2, y2] = ginput(1);
 hold off
@@ -95,7 +100,7 @@ hold off
 z = figure();
 set(z, 'Position', get(0, 'Screensize'));
 imagesc(rot90(squeeze(Particles(:, 512, :)), -1))
-colormap('hot')
+colormap('gray')
 hold on 
 x1 = Center(2);
 y1 = Center(1);
@@ -122,7 +127,7 @@ y_text1 = y_mid1 + offset * perp_dy1;
 text(x_text1, y_text1, 'r_1', 'FontSize', 20, 'FontWeight', 'bold', 'Color', 'w');
 axis image;
 hold off;
-saveas(z, append(OutputFolder, filesep, 'Particle_arrow.png'));
+saveas(z, append(OutputFolder, filesep, 'Particle_arrow.svg'));
 
 %%% membrane image with arrow
 thetaDeg = deg2rad(theta);
@@ -135,11 +140,11 @@ binaryImage = rot90(squeeze(SpheroidEdge(:, 512, :)), -1);
 while x > 1 && x < size(binaryImage, 2) && y > 1 && y < size(binaryImage, 1)
     xi = round(x);
     yi = round(y);
-    
+
     if binaryImage(yi, xi) > 0
         break;
     end
-    
+
     x = x + stepSize * dx;
     y = y + stepSize * dy;
 end
@@ -150,7 +155,7 @@ q = figure();
 set(q, 'Position', get(0, 'Screensize'));
 bg = rot90(squeeze(Membrane(:, 512, :)), -1);
 q1 = imagesc(bg);
-colormap('hot');
+colormap('gray');
 hold on;
 overlay = rot90(squeeze(SpheroidEdge(:, 512, :)), -1);
 overlay(Center(1)-2:Center(1)+2, Center(2)-4:Center(2)+4) = 1;
@@ -185,7 +190,7 @@ y_text2 = y_mid2 + offset * perp_dy2;
 text(x_text2, y_text2, 'r_2', 'FontSize', 20, 'FontWeight', 'bold', 'Color', 'w');
 axis image;
 hold off;
-saveas(q, append(OutputFolder, filesep, 'Spheroid_arrow.png'));
+saveas(q, append(OutputFolder, filesep, 'Spheroid_arrow.svg'));
 
 
 %%% particle image with arrow and edge
@@ -199,11 +204,11 @@ binaryImage = rot90(squeeze(SpheroidEdge(:, 512, :)), -1);
 while x > 1 && x < size(binaryImage, 2) && y > 1 && y < size(binaryImage, 1)
     xi = round(x);
     yi = round(y);
-    
+
     if binaryImage(yi, xi) > 0
         break;
     end
-    
+
     x = x + stepSize * dx;
     y = y + stepSize * dy;
 end
@@ -214,7 +219,7 @@ u = figure();
 set(u, 'Position', get(0, 'Screensize'));
 bg = rot90(squeeze(Particles(:, 512, :)), -1);
 u1 = imagesc(bg);
-colormap('hot');
+colormap('gray');
 hold on;
 overlay = rot90(squeeze(SpheroidEdge(:, 512, :)), -1);
 overlay(Center(1)-2:Center(1)+2, Center(2)-4:Center(2)+4) = 1;
@@ -251,7 +256,7 @@ y_text3 = y_mid3 + offset * perp_dy3;
 text(x_text3, y_text3, 'Depth', 'FontSize', 20, 'FontWeight', 'bold', 'Color', 'g');
 axis image;
 hold off;
-saveas(u, append(OutputFolder, filesep, 'Particles_arrow_edge.png'));
+saveas(u, append(OutputFolder, filesep, 'Particles_arrow_edge.svg'));
 
 %%% save intensity profile
 k = figure()
@@ -260,4 +265,4 @@ plot(IntensityInFunctionOfDepth(:,1), IntensityInFunctionOfDepth(:,2))
 xlim([-10 100])
 xlabel('Penetration depth (µm)')
 ylabel('Intensity (a.u)')
-saveas(k, append(OutputFolder, filesep, 'Intensity_profile.png'));
+saveas(k, append(OutputFolder, filesep, 'Intensity_profile.svg'));

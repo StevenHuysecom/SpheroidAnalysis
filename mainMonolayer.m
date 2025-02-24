@@ -3,16 +3,16 @@ close all;
 clc;
 %% User Input
 file.ext  = '.lif';
-file.runSegmentation = 'load'; %load or run
+file.runSegmentation = 'run'; %load or run
 
 % info.pxSizeXY = 454.5; 
 % info.pxSizeZ  = 1000;
 info.Membrane = 'excluded'; %included or excluded
 
-MainFolder = {'E:\Steven'};
+MainFolder = {'D:\Steven\Au@mSi'};
 DimensionFolders = {'2D'};
-HourFolders = {'48hour', '24hour'};
-CellineFolders = {'MCF7', 'KM12C', 'HeLa', 'A549'};
+HourFolders = {'3hour'};%'3hour', '24hour', '48hour'
+CellineFolders = {'A549', 'HeLa', 'KM12C', 'MCF7'};
 
 %Give info about the channels, the word needs to be lowercase with no typos
 %care that the
@@ -27,6 +27,7 @@ for m = 1:numel(DimensionFolders)
     DimensionFolder = DimensionFolders{m};
     for a = 1:numel(HourFolders)
         HourFolder = HourFolders{a};
+        SliceMatrix = readmatrix(append(MainFolder{1,1}, filesep, DimensionFolder, filesep, 'SlicesNoPEI.xlsx'), 'Sheet', HourFolder);
         for r = 1:numel(CellineFolders)
             try
                 CellineFolder = CellineFolders{r};
@@ -58,12 +59,16 @@ for m = 1:numel(DimensionFolders)
                                         stack = Core.MonolayerSegmentation(file,info);
                                         stack.loadDataBioform(chan);
                                         stack.showChannel;
+
+                                        Position = SubFolder(j).name;
+                                        x = str2num(Position(9:end));
                         
+                                        Slice = SliceMatrix(x, r);
                                         %% DL segmentation per plane
-                                        Ws = stack.segmentMembraneDL;
+                                        Ws = stack.segmentMembraneDL(Slice);
                         
                                         %% Particle Intensity
-                                        [Int, MembraneInt, IntRatio, MembrIntRatio, Volume]= stack.getIntensityInside();
+                                        [Int, MembraneInt, IntRatio, MembrIntRatio, Volume]= stack.getIntensityInside(Slice);
                                         CellInt = [CellInt; Int];
                                         MembrInt = [MembrInt; MembraneInt];
                                         CellDens = [CellDens; IntRatio];

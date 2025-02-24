@@ -106,8 +106,8 @@ classdef MonolayerSegmentation < handle
             
         end
         
-        function ws = segmentMembraneDL(obj)
-            fr = 20;
+        function ws = segmentMembraneDL(obj, SliceNumber)
+            fr = SliceNumber;
             %% Check if segmentation already exists
             SegmentationFile = append(obj.raw.path, filesep, 'MembraneSegmentation.mat');
             if exist(SegmentationFile)
@@ -150,8 +150,8 @@ classdef MonolayerSegmentation < handle
                 disp('(re)running segmentation')
                 data = obj.getChannel('membrane');
                     
-                medData = medfilt3(data);
-                fr = 25;
+                medData = medfilt2(data(:,:,fr));
+                fr = SliceNumber;
     
                 %% Deeplearning segmentation
                 tic
@@ -161,7 +161,8 @@ classdef MonolayerSegmentation < handle
                 f = waitbar(0,'DL segmentation - slice by slice');
                 cp = cellpose;
                 
-                for i = 1:size(data,3)
+                % for i = 1:size(data,3)
+                i = SliceNumber;
                     waitbar(i./size(data,3),f,'DL segmentation - slice by slice');
                     labels = segmentCells2D(cp, data(:,:,i), ImageCellDiameter = 130,  CellThreshold=0, FlowErrorThreshold = 1.5);
                     result = labels;
@@ -202,38 +203,40 @@ classdef MonolayerSegmentation < handle
                             end
                         end
                     end
-                    labelsFull(:,:,i) = result;
-                end
+                    % labelsFull(:,:,i) = result;
+                    labelsFull = result;
+                % end
                 toc
                 close(f)
-                ZStack = Core.adjustSegmentIndices(labelsFull, fr);
+                % ZStack = Core.adjustSegmentIndices(labelsFull, fr);
+                ZStack = labelsFull;
                 [~,Membrane] = imSegmentation.segmentStack(uint16(medData),'threshold',0.5,...
                             'connectivity',9,'diskDim',2);
                 ZStack(Membrane == 1) = 0;
                 %ZStackEdges = Core.DefineEdges(ZStack);
 
-                for i = 1:size(ZStack, 3)
-                    CurrentStack = ZStack(:,:,i);
+                % for i = 1:size(ZStack, 3)
+                    CurrentStack = ZStack;
                     CurrentStack(CurrentStack > 0) = 1;
                     CurrentLabel = bwlabel(CurrentStack);
                     CurrentLabel = bwareaopen(CurrentLabel, 1500);
-                    ZStackfiltered = ZStack(:,:,i);
+                    ZStackfiltered = ZStack;
                     ZStackfiltered(CurrentLabel == 0) = 0;
                     ZStackfiltered = imfill(ZStackfiltered, 'holes');
-                    ZStack(:,:,i) = ZStackfiltered;
-                end
+                    ZStack = ZStackfiltered;
+                % end
                 
                 ws = ZStack;
-                minVolume = 50000;
+                minVolume = 2700;
                 regionProps = regionprops3(ws, 'Volume');
                 validRegions = find(regionProps.Volume >= minVolume);
                 mask = ismember(ZStack, validRegions);
                 ws(mask == 0) = 0;
 
                 contour = cell(1,size(ws,3));
-                for i = 1:size(ws,3)
-                    currBW = ws(:,:,i);
-       
+                % for i = 1:size(ws,3)
+                    %currBW = ws(:,:,i);
+                    currBW = ws;
                     %Get the largest area
                     cBWarea = regionprops(ws,'Area');
                     [~,idx2BiggestArea] = max(cell2mat({cBWarea.Area}));
@@ -242,15 +245,17 @@ classdef MonolayerSegmentation < handle
                     else               
                         [pContour] = bwboundaries(currBW);
                         for j = 1:length(pContour)
-                            contour{i}{j} = pContour{j};
+                            %contour{i}{j} = pContour{j};
+                            contour{1}{j} = pContour{j};
                         end
                     end
-                end
+                % end
 
 
                 % for i = 1:10
-                    fr = 20;
-                    cContour = contour{1,fr};
+                    fr = SliceNumber;
+                    %cContour = contour{1,fr};
+                    cContour = contour{1,1};
                     figure
                     imagesc(data(:,:,fr))
                     colormap('hot')
@@ -268,6 +273,7 @@ classdef MonolayerSegmentation < handle
 
                 if strcmp(obj.info.Membrane,'excluded')
                     Membrane(ZStack ~= 0) = 0;
+                    Membrane = bwareaopen(Membrane, 2500);
                     MembraneSegment = Membrane;
                     obj.results.MembraneSegment = MembraneSegment;
                     filename = append(obj.raw.path, filesep, 'MembraneSegment.mat');
@@ -280,20 +286,29 @@ classdef MonolayerSegmentation < handle
             end
         end
        
-        function [Int, MembraneInt, IntRatio, MembrRatio, VolumeList] = getIntensityInside(obj)
+        function [Int, MembraneInt, IntRatio, MembrRatio, VolumeList] = getIntensityInside(obj, SliceNumber)
 
-            fr = 20;
+            fr = SliceNumber;
             PartData = obj.getChannel('particles');
             mask = obj.results.cellMask;
 
-            stats = regionprops3(mask, 'Volume', 'VoxelIdxList');
-            DeleteRows = find(stats.Volume == 0);
-            stats(DeleteRows, :) = [];
-            IntMatrix = zeros(size(PartData));
+            %stats = regionprops(mask, 'Volume', 'VoxelIdxList');
+            stats = regionprops(mask, 'Area', 'PixelIdxList');
+            %DeleteRows = find(stats.Volume == 0);
+            for a = 1:size(stats, 1)
+                if stats(a).Area == 0
+                    DeleteRows(a,1) = 1;
+                else
+                    DeleteRows(a,1) = 0;
+                end
+            end
+            %DeleteRows = find(stats.Area == 0);
+            stats(logical(DeleteRows), :) = [];
+            IntMatrix = zeros(size(PartData, 1), size(PartData, 2));
             for i = 1:size(stats,1)
-                SegmentMask = zeros(size(PartData));
-                SegmentMask(stats.VoxelIdxList{i,1}) = 1;
-                ParticleMatrix = PartData;
+                SegmentMask = zeros(size(PartData, 1), size(PartData, 2));
+                SegmentMask(stats(i).PixelIdxList) = 1;
+                ParticleMatrix = PartData(:,:,fr);
                 ParticleMatrix(SegmentMask == 0) = 0;
                 Int(i,1) = sum(ParticleMatrix, 'all');               
                 IntMatrix(SegmentMask == 1) = Int(i,1);
@@ -301,13 +316,15 @@ classdef MonolayerSegmentation < handle
             
             PxSizes = load(append(obj.raw.path, filesep, 'PxSizes.mat'));
             PxSizes = PxSizes.PxSizes;
-            PxVolume = PxSizes(1)*PxSizes(2)*PxSizes(3);
-            IntRatio = Int./(stats.Volume*PxVolume);
-            VolumeList = stats.Volume*PxVolume;
+            PxVolume = PxSizes(1)*PxSizes(2);%*PxSizes(3);
+            for z = 1:size(stats, 1)
+                IntRatio(z,1)= Int(z,1)./(stats(z).Area*PxVolume);
+                VolumeList(z,1) = stats(z).Area*PxVolume;
+            end
             
             if strcmp(obj.info.Membrane, 'excluded')
                 MembraneMask = obj.results.MembraneSegment;
-                MembranePart = PartData;
+                MembranePart = PartData(:,:,fr);
                 MembranePart(MembraneMask ~= 1) = 0;
                 MembraneInt = sum(MembranePart(:));
 

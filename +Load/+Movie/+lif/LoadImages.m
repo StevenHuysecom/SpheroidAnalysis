@@ -36,12 +36,14 @@ function LoadImages(file, chan)
                             end
                             MatFileName = append(file.path,filesep,subfolder,filesep,ImageName,filesep,'Membrane.mat');
                             save(MatFileName, 'Membrane')
+                            %save(MatFileName, 'Particles')
                         elseif l == 2
                             for j = 1:bfI.sizeZ
                                 Particles(:,:,j) = getPlane(bfI, j, l, 1);
                             end
                             MatFileName = append(file.path,filesep,subfolder,filesep,ImageName,filesep,'Particles.mat');
                             save(MatFileName, 'Particles')
+                            %save(MatFileName, Membrane')
                         else
                             assert("Unknown channel detected - not membrane neither particles")
                         end

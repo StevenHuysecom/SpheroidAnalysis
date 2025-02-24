@@ -3,10 +3,14 @@ close all;
 clc;
 %% User Input
 file.ext  = '.lif';
+<<<<<<< HEAD
 
 MainFolder = {'M:\Data Uptake\AuNP@mSi@PEI'};
+=======
+MainFolder = {'D:\Steven\Au@mSi'};
+>>>>>>> 3b0b09493a4b279e11ce997f6094348c65c5744e
 DimensionFolders = {'3D'};
-HourFolders = {'3hour', '6hour', '24hour', '48hour'};
+HourFolders = {'48hour'};
 ParticleFolders = {'HeLa'};
 
 
@@ -27,6 +31,7 @@ for m = 1:numel(DimensionFolders)
                 ParticleFolder = ParticleFolders{r};
                 Path = append(MainFolder, filesep, DimensionFolder, filesep, HourFolder,...
                     filesep, ParticleFolder);
+                % Path = append(MainFolder, filesep, ParticleFolder);
                 file.path = Path{1,1};
     
                 Load.Movie.lif.LoadImages(file, chan);

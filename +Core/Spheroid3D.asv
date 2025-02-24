@@ -129,11 +129,11 @@ classdef Spheroid3D < handle
             end
             testmembrane = imerode(testmembrane, strel('sphere', 4));
             InnerDilation = imdilate(testmembrane .* membrane, strel('sphere', 2));
-            if size(testmembrane,3) > 100
-                testmembrane(:,:,1:100) = zeros(size(testmembrane(:,:,1:100)));
-            else
-                testmembrane = zeros(size(testmembrane));
-            end
+            % if size(testmembrane,3) > 200
+            %     testmembrane(:,:,1:200) = zeros(size(testmembrane(:,:,1:200)));
+            % else
+            %     testmembrane = zeros(size(testmembrane));
+            % end
             membrane(testmembrane == 1) = InnerDilation(testmembrane == 1);
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -222,7 +222,6 @@ classdef Spheroid3D < handle
                 disp('Found particles in cartsesian coordinates: loading it')
             elseif ~exist(PartCartFile)
                 PartMatrix = obj.channels.particles;
-                PartMatrix(PartMatrix < 23) = 0;
                 PartList = (unique(PartMatrix(:))).';
                 PartCartrow = [];
                 PartCartcol = [];
