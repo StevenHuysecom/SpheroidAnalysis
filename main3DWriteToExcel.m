@@ -6,7 +6,7 @@ file.ext  = '.lif';
 MainFolder = {'D:\Steven\Au@mSi'};
 DimensionFolders = {'3D'};
 HourFolders = {'48hour'};
-ParticleFolders = {'A549', 'HeLa', 'KM12C', 'MCF7'};
+ParticleFolders = {'HeLa'};
 
 BigMatrix = [];
 

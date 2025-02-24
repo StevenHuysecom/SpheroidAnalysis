@@ -9,7 +9,7 @@ file.runSegmentation = 'run'; %load or run
 % info.pxSizeZ  = 1000;
 info.Membrane = 'excluded'; %included or excluded
 
-MainFolder = {'C:\Users\Windows 11\OneDrive - KU Leuven\Documents\KU Leuven\PhD\data\Maria AuNP@mSi@PEI'};
+MainFolder = {'D:\Steven\Au@mSi'};
 DimensionFolders = {'2D'};
 HourFolders = {'3hour'};%'3hour', '24hour', '48hour'
 CellineFolders = {'A549', 'HeLa', 'KM12C', 'MCF7'};
@@ -27,7 +27,7 @@ for m = 1:numel(DimensionFolders)
     DimensionFolder = DimensionFolders{m};
     for a = 1:numel(HourFolders)
         HourFolder = HourFolders{a};
-        SliceMatrix = readmatrix(append(MainFolder{1,1}, filesep, DimensionFolder, filesep, 'Slices.xlsx'), 'Sheet', HourFolder);
+        SliceMatrix = readmatrix(append(MainFolder{1,1}, filesep, DimensionFolder, filesep, 'SlicesNoPEI.xlsx'), 'Sheet', HourFolder);
         for r = 1:numel(CellineFolders)
             try
                 CellineFolder = CellineFolders{r};

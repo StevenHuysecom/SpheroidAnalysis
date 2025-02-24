@@ -112,7 +112,9 @@ classdef Spheroid3D < handle
             waitbar(.10,f,'Calculating spheroid center - median filter');
             membrane(membrane < 10) = 0;
 
-            %membrane = imadjustn(membrane);  % Normalize intensity across all slices
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %% This part only active when HeLa spheroids show very low intensity inside %%
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             testmembrane = obj.channels.membrane;
             List = unique(testmembrane);
             testmembrane(testmembrane < List(2)) = 0;
@@ -127,15 +129,19 @@ classdef Spheroid3D < handle
             end
             testmembrane = imerode(testmembrane, strel('sphere', 4));
             InnerDilation = imdilate(testmembrane .* membrane, strel('sphere', 2));
-            if size(testmembrane,3) > 200
-                testmembrane(:,:,1:200) = zeros(size(testmembrane(:,:,1:200)));
-            else
-                testmembrane = zeros(size(testmembrane));
-            end
+            % if size(testmembrane,3) > 200
+            %     testmembrane(:,:,1:200) = zeros(size(testmembrane(:,:,1:200)));
+            % else
+            %     testmembrane = zeros(size(testmembrane));
+            % end
             membrane(testmembrane == 1) = InnerDilation(testmembrane == 1);
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+            %%%%%%%%%%%%% Comment while working with HeLa spheroids %%%%%%%
             % se = strel('cube', 2);
             % membrane = imdilate(membrane, se);
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             membrane = medfilt3(membrane, [5 5 5]);
             waitbar(.20,f,'Calculating spheroid center - filling holes');
             membrane = bwareaopen(membrane, 500000);
@@ -143,7 +149,9 @@ classdef Spheroid3D < handle
             for i = 1:size(membrane, 3)
                 membrane(:,:,i) = imfill(membrane(:,:,i), "holes");
                 stats = regionprops(membrane(:,:,i), 'Area');
-                if max(struct2array(stats)) > 5000
+                if i > 240
+                    membrane(:,:,i) = bwareaopen(membrane(:,:,i), 10000);
+                elseif max(struct2array(stats)) > 5000
                     membrane(:,:,i) = bwareaopen(membrane(:,:,i), 5000);
                 end
             end

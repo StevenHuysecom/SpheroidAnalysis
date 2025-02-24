@@ -110,13 +110,6 @@ classdef Spheroid3D < handle
             f = waitbar(0,'Calculating spheroid center - loading');
             membrane = obj.channels.membrane;
             waitbar(.10,f,'Calculating spheroid center - median filter');
-<<<<<<< HEAD
-            %membrane(membrane < 10) = 0;
-            % se = strel('cube', 2);
-            % membrane = imdilate(membrane, se);
-            %membrane = medfilt3(membrane, [5 5 5]);
-            membrane = imgaussfilt3(membrane, [3 3 3]);
-=======
             membrane(membrane < 10) = 0;
 
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -136,8 +129,8 @@ classdef Spheroid3D < handle
             end
             testmembrane = imerode(testmembrane, strel('sphere', 4));
             InnerDilation = imdilate(testmembrane .* membrane, strel('sphere', 2));
-            if size(testmembrane,3) > 200
-                testmembrane(:,:,1:200) = zeros(size(testmembrane(:,:,1:200)));
+            if size(testmembrane,3) > 100
+                testmembrane(:,:,1:100) = zeros(size(testmembrane(:,:,1:100)));
             else
                 testmembrane = zeros(size(testmembrane));
             end
@@ -150,12 +143,9 @@ classdef Spheroid3D < handle
             % membrane = imdilate(membrane, se);
             %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
             membrane = medfilt3(membrane, [5 5 5]);
->>>>>>> 60a2a2f09231b191419482fde49ffcddf3f271cd
             waitbar(.20,f,'Calculating spheroid center - filling holes');
-            %membrane = bwareaopen(membrane, 500000);
+            membrane = bwareaopen(membrane, 500000);
             waitbar(.30,f,'Calculating spheroid center - filling holes');
-            membrane(membrane <= 3) = 0;
-            membrane(membrane > 3) = 1;
             for i = 1:size(membrane, 3)
                 membrane(:,:,i) = imfill(membrane(:,:,i), "holes");
                 stats = regionprops(membrane(:,:,i), 'Area');
@@ -166,10 +156,9 @@ classdef Spheroid3D < handle
                 end
             end
             waitbar(.70,f,'Calculating spheroid center - filling holes');
-            %membrane = imfill(membrane, "holes");
+            membrane = imfill(membrane, "holes");
             waitbar(.80,f,'Calculating spheroid center - edge detection');
-            %SpheroidEdge = edge3(membrane, "sobel", 0.5);
-            SpheroidEdge = edge3(membrane, "approxcanny", 0.5);
+            SpheroidEdge = edge3(membrane, "sobel", 0.5);
             waitbar(.90,f,'Calculating spheroid center - sphere/ellipsoid fitting');
             for i = 1:size(membrane, 3)
                 Area(i) = sum(membrane(:,:,i), 'all');
@@ -233,6 +222,7 @@ classdef Spheroid3D < handle
                 disp('Found particles in cartsesian coordinates: loading it')
             elseif ~exist(PartCartFile)
                 PartMatrix = obj.channels.particles;
+                PartMatrix(PartMatrix < 23) = 0;
                 PartList = (unique(PartMatrix(:))).';
                 PartCartrow = [];
                 PartCartcol = [];
