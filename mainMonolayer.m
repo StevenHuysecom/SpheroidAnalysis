@@ -9,16 +9,16 @@ file.runSegmentation = 'run'; %load or run
 % info.pxSizeZ  = 1000;
 info.Membrane = 'excluded'; %included or excluded
 
-MainFolder = {'D:\Steven\Au@mSi'};
-DimensionFolders = {'2D'};
-HourFolders = {'3hour'};%'3hour', '24hour', '48hour'
-CellineFolders = {'A549', 'HeLa', 'KM12C', 'MCF7'};
+MainFolder = {'D:'};
+DimensionFolders = {'mini'};
+HourFolders = {'MCF7'};%'3hour', '24hour', '48hour'
+CellineFolders = {'nanorod'};
 
 %Give info about the channels, the word needs to be lowercase with no typos
 %care that the
-chan.ch01 = 'Membrane';
-chan.ch02 = 'Particles';
-chan.ch03 = 'ignore';
+chan.ch01 = 'ignore';
+chan.ch02 = 'Membrane';
+chan.ch03 = 'Particles';
 chan.ch04 = 'ignore';
 
 %% Loading data
@@ -27,7 +27,7 @@ for m = 1:numel(DimensionFolders)
     DimensionFolder = DimensionFolders{m};
     for a = 1:numel(HourFolders)
         HourFolder = HourFolders{a};
-        SliceMatrix = readmatrix(append(MainFolder{1,1}, filesep, DimensionFolder, filesep, 'SlicesNoPEI.xlsx'), 'Sheet', HourFolder);
+        % SliceMatrix = readmatrix(append(MainFolder{1,1}, filesep, DimensionFolder, filesep, 'SlicesNoPEI.xlsx'), 'Sheet', HourFolder);
         for r = 1:numel(CellineFolders)
             try
                 CellineFolder = CellineFolders{r};

@@ -164,7 +164,7 @@ classdef MonolayerSegmentation < handle
                 % for i = 1:size(data,3)
                 i = SliceNumber;
                     waitbar(i./size(data,3),f,'DL segmentation - slice by slice');
-                    labels = segmentCells2D(cp, data(:,:,i), ImageCellDiameter = 130,  CellThreshold=0, FlowErrorThreshold = 1.5);
+                    labels = segmentCells2D(cp, data(:,:,i), ImageCellDiameter = 50,  CellThreshold=0, FlowErrorThreshold = 1.5);
                     result = labels;
                     for r = 1:1024
                         for c = 1:1024

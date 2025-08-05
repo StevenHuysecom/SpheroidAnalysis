@@ -3,12 +3,8 @@ close all;
 clc;
 %% User Input
 file.ext  = '.lif';
-<<<<<<< HEAD
 
 MainFolder = {'M:\Data Uptake\AuNP@mSi@PEI'};
-=======
-MainFolder = {'D:\Steven\Au@mSi'};
->>>>>>> 3b0b09493a4b279e11ce997f6094348c65c5744e
 DimensionFolders = {'3D'};
 HourFolders = {'48hour'};
 ParticleFolders = {'HeLa'};
