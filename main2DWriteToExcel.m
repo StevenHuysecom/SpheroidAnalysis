@@ -3,10 +3,10 @@ close all;
 clc;
 %% User Input
 file.ext  = '.lif';
-MainFolder = {'C:\Users\Windows 11\OneDrive - KU Leuven\Documents\KU Leuven\PhD\data\Maria AuNP@mSi@PEI'};
+MainFolder = {'D:\Steven\Au@mSi'};
 DimensionFolders = {'2D'};
 HourFolders = {'3hour'}; %
-ParticleFolders = {'A549', 'HeLa', 'KM12C', 'MCF7'};
+ParticleFolders = {'KM12C'};
 
 BigMatrix = [];
 
@@ -14,7 +14,7 @@ for m = 1:numel(DimensionFolders)
     DimensionFolder = DimensionFolders{m};
     for a = 1:numel(HourFolders)
         HourFolder = HourFolders{a};
-        SliceMatrix = readmatrix(append(MainFolder{1,1}, filesep, DimensionFolder, filesep, 'Slices.xlsx'), 'Sheet', HourFolder);
+        SliceMatrix = readmatrix(append(MainFolder{1,1}, filesep, DimensionFolder, filesep, 'SlicesNoPEI.xlsx'), 'Sheet', HourFolder);
         for r = 1:numel(ParticleFolders)
             %try
                 ParticleFolder = ParticleFolders{r};
