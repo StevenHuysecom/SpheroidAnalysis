@@ -16,7 +16,7 @@ for m = 1:numel(DimensionFolders)
         HourFolder = HourFolders{a};
         SliceMatrix = readmatrix(append(MainFolder{1,1}, filesep, DimensionFolder, filesep, 'SlicesNoPEI.xlsx'), 'Sheet', HourFolder);
         for r = 1:numel(ParticleFolders)
-            %try
+            try
                 ParticleFolder = ParticleFolders{r};
                 Path = append(MainFolder, filesep, DimensionFolder, filesep, HourFolder,...
                     filesep, ParticleFolder);
@@ -154,8 +154,8 @@ for m = 1:numel(DimensionFolders)
                     else
                     end 
                 end     
-            % catch
-            % end
+            catch
+            end
         end
     end
 end
