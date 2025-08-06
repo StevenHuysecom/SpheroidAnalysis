@@ -30,22 +30,24 @@ function LoadImages(file, chan)
                     save(MatFileName, 'PxSizes')
 
                     for l = 1:bfI.sizeC
-                        if l == 1
+                        if strcmp(chan.(append('ch0', num2str(l))), 'ignore')
+                            disp(append('Ignored channel ', num2str(l)))
+                        elseif strcmp(chan.(append('ch0', num2str(l))), 'Membrane')
+                            disp(append('Channel ', num2str(l), ' equals Membrane'))
                             for j = 1:bfI.sizeZ
                                 Membrane(:,:,j) = getPlane(bfI, j, l, 1);
                             end
                             MatFileName = append(file.path,filesep,subfolder,filesep,ImageName,filesep,'Membrane.mat');
                             save(MatFileName, 'Membrane')
-                            %save(MatFileName, 'Particles')
-                        elseif l == 2
+                        elseif strcmp(chan.(append('ch0', num2str(l))), 'Particles')
+                            disp(append('Channel ', num2str(l), ' equals Particles'))
                             for j = 1:bfI.sizeZ
                                 Particles(:,:,j) = getPlane(bfI, j, l, 1);
                             end
                             MatFileName = append(file.path,filesep,subfolder,filesep,ImageName,filesep,'Particles.mat');
                             save(MatFileName, 'Particles')
-                            %save(MatFileName, Membrane')
                         else
-                            assert("Unknown channel detected - not membrane neither particles")
+                            error("Unknown channel detected - not membrane neither particles")
                         end
                     end
 

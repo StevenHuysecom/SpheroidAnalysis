@@ -9,17 +9,11 @@ file.runSegmentation = 'run'; %load or run
 % info.pxSizeZ  = 1000;
 info.Membrane = 'excluded'; %included or excluded
 
-<<<<<<< HEAD
-MainFolder = {'D:\Steven\Au@mSi'};
-DimensionFolders = {'2D'};
-HourFolders = {'3hour'};%'3hour', '24hour', '48hour'
-CellineFolders = {'KM12C'};
-=======
 MainFolder = {'D:'};
 DimensionFolders = {'mini'};
-HourFolders = {'MCF7'};%'3hour', '24hour', '48hour'
-CellineFolders = {'nanorod'};
->>>>>>> 91812f2916fa9de4b442fc8efdeeb33a14c3b5ac
+HourFolders = {'uptake nanorods in mcf7'};%'3hour', '24hour', '48hour'
+CellineFolders = {'MCF7_control_NR', 'MCF7_control_NRH2', 'MCF7_high_NR', 'MCF7_high_NRH2',...
+    'MCF7_low_NR', 'MCF7_low_NRH2'};
 
 %Give info about the channels, the word needs to be lowercase with no typos
 %care that the
@@ -34,11 +28,7 @@ for m = 1:numel(DimensionFolders)
     DimensionFolder = DimensionFolders{m};
     for a = 1:numel(HourFolders)
         HourFolder = HourFolders{a};
-<<<<<<< HEAD
         SliceMatrix = readmatrix(append(MainFolder{1,1}, filesep, DimensionFolder, filesep, 'SlicesNoPEI.xlsx'), 'Sheet', HourFolder);
-=======
-        % SliceMatrix = readmatrix(append(MainFolder{1,1}, filesep, DimensionFolder, filesep, 'SlicesNoPEI.xlsx'), 'Sheet', HourFolder);
->>>>>>> 91812f2916fa9de4b442fc8efdeeb33a14c3b5ac
         for r = 1:numel(CellineFolders)
             try
                 CellineFolder = CellineFolders{r};
@@ -75,10 +65,10 @@ for m = 1:numel(DimensionFolders)
                                         x = str2num(Position(9:end));
                         
                                         Slice = SliceMatrix(x, r);
-                                        %% DL segmentation per plane
+                                        % DL segmentation per plane
                                         Ws = stack.segmentMembraneDL(Slice);
                         
-                                        %% Particle Intensity
+                                        % Particle Intensity
                                         [Int, MembraneInt, IntRatio, MembrIntRatio, Volume]= stack.getIntensityInside(Slice);
                                         CellInt = [CellInt; Int];
                                         MembrInt = [MembrInt; MembraneInt];
