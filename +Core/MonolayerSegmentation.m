@@ -164,10 +164,10 @@ classdef MonolayerSegmentation < handle
                 % for i = 1:size(data,3)
                 i = SliceNumber;
                     waitbar(i./size(data,3),f,'DL segmentation - slice by slice');
-                    labels = segmentCells2D(cp, data(:,:,i), ImageCellDiameter = 50,  CellThreshold=0, FlowErrorThreshold = 1.5);
+                    labels = segmentCells2D(cp, data(:,:,i), ImageCellDiameter = 100,  CellThreshold=0.5, FlowErrorThreshold = 1.5);
                     result = labels;
-                    for r = 1:512
-                        for c = 1:512
+                    for r = 1:1024
+                        for c = 1:1024
                             Edge = 1;
                             currentValue = labels(r, c);
                             if currentValue == 0
@@ -210,8 +210,8 @@ classdef MonolayerSegmentation < handle
                 close(f)
                 % ZStack = Core.adjustSegmentIndices(labelsFull, fr);
                 ZStack = labelsFull;
-                [~,Membrane] = imSegmentation.segmentStack(uint16(medData),'threshold',0.5,...
-                            'connectivity',9,'diskDim',2);
+                [~,Membrane] = imSegmentation.segmentStack(uint16(medData),'threshold',0.1,...
+                            'connectivity',8,'diskDim',2);
                 ZStack(Membrane == 1) = 0;
                 %ZStackEdges = Core.DefineEdges(ZStack);
 
@@ -226,11 +226,11 @@ classdef MonolayerSegmentation < handle
                     ZStack = ZStackfiltered;
                 % end
                 
-                ws = ZStack;
-                minVolume = 100;
+                ws = bwlabel(ZStack);
+                minVolume = 1000;
                 regionProps = regionprops(ws, 'Area');
                 validRegions = find([regionProps.Area] >= minVolume);
-                mask = ismember(ZStack, validRegions);
+                mask = ismember(ws, validRegions);
                 ws(mask == 0) = 0;
 
                 contour = cell(1,size(ws,3));
@@ -274,12 +274,19 @@ classdef MonolayerSegmentation < handle
 
                 if strcmp(obj.info.Membrane,'excluded')
                     Membrane(ZStack ~= 0) = 0;
-                    Membrane = bwareaopen(Membrane, 2500);
+                    Membrane = bwareaopen(Membrane, 500);
                     MembraneSegment = Membrane;
                     obj.results.MembraneSegment = MembraneSegment;
                     filename = append(obj.raw.path, filesep, 'MembraneSegment.mat');
                     save(filename, 'MembraneSegment');
                 end
+                fig2 =  figure()
+                MembraneFig = data(:,:,fr);
+                MembraneFig(Membrane == 1) = max(MembraneFig, [], 'all');
+                imagesc(MembraneFig);
+                colormap('hot')
+                axis image
+                saveas(fig2, append(obj.raw.path, filesep, 'Membrane.png'));
     
                 filename = append(obj.raw.path, filesep, 'MembraneSegmentation.mat');
                 save(filename, 'ws');
@@ -297,7 +304,7 @@ classdef MonolayerSegmentation < handle
             stats = regionprops(mask, 'Area', 'PixelIdxList');
             %DeleteRows = find(stats.Volume == 0);
             for a = 1:size(stats, 1)
-                if stats(a).Area == 0
+                if stats(a).Area < 1000
                     DeleteRows(a,1) = 1;
                 else
                     DeleteRows(a,1) = 0;

@@ -222,30 +222,53 @@ classdef Spheroid3D < handle
                 disp('Found particles in cartsesian coordinates: loading it')
             elseif ~exist(PartCartFile)
                 PartMatrix = obj.channels.particles;
-                PartMatrix(PartMatrix < 23) = 0;
+                PartMatrix(PartMatrix < 50) = 0;
                 PartList = (unique(PartMatrix(:))).';
                 PartCartrow = [];
                 PartCartcol = [];
                 PartCartz = [];
                 IntList = [];
                 f = waitbar(0,'Coordinate rearrangement: matrix to cart - particles'); 
-                Start = find(PartList > 30, 1);
-                for i = Start:size(PartList, 2) % remove 0 and 11 values
-                    waitbar(i./size(PartList,2),f,'Coordinate rearrangement: matrix to cart - particles');
-                    [row, col, z]  = ind2sub(size(PartMatrix), find(PartMatrix == PartList(1,i)));
-                    row = row - obj.results.Center(1);
-                    col = col - obj.results.Center(2);
-                    z = z - obj.results.Center(3);
-                    row = row*obj.info.pxSizeXY;
-                    col = col*obj.info.pxSizeXY;
-                    z = z*obj.info.pxSizeZ;
-                    Int = zeros(size(row));
-                    Int(:) = PartList(1,i);
-                    PartCartrow = [PartCartrow; row(:)];
-                    PartCartcol = [PartCartcol; col(:)];
-                    PartCartz = [PartCartz; z(:)];
-                    IntList = [IntList; Int(:)];
-                end
+                [rows, cols, zs] = ind2sub(size(PartMatrix), 1:numel(PartMatrix));
+                rows = rows(:);
+                cols = cols(:);
+                zs = zs(:);
+                values = PartMatrix(:);
+                
+                % Filter out unwanted IDs (e.g., 0 and 11)
+                validIdx = values ~= 0 & values ~= 11;
+                rows = rows(validIdx);
+                cols = cols(validIdx);
+                zs = zs(validIdx);
+                values = values(validIdx);
+                
+                % Apply center correction and scaling (vectorized)
+                rows = (rows - obj.results.Center(1)) * obj.info.pxSizeXY;
+                cols = (cols - obj.results.Center(2)) * obj.info.pxSizeXY;
+                zs   = (zs   - obj.results.Center(3)) * obj.info.pxSizeZ;
+                
+                % Store final outputs
+                PartCartrow = rows;
+                PartCartcol = cols;
+                PartCartz   = zs;
+                IntList     = values;
+                % for i = Start:size(PartList, 2) % remove 0 and 11 values
+                %     waitbar(i./size(PartList,2),f,append('Coordinate rearrangement: matrix to cart - particles ',...
+                %         num2str(i), ' / ', num2str(size(PartList, 2))));
+                %     [row, col, z]  = ind2sub(size(PartMatrix), find(PartMatrix == PartList(1,i)));
+                %     row = row - obj.results.Center(1);
+                %     col = col - obj.results.Center(2);
+                %     z = z - obj.results.Center(3);
+                %     row = row*obj.info.pxSizeXY;
+                %     col = col*obj.info.pxSizeXY;
+                %     z = z*obj.info.pxSizeZ;
+                %     Int = zeros(size(row));
+                %     Int(:) = PartList(1,i);
+                %     PartCartrow = [PartCartrow; row(:)];
+                %     PartCartcol = [PartCartcol; col(:)];
+                %     PartCartz = [PartCartz; z(:)];
+                %     IntList = [IntList; Int(:)];
+                % end
                 PartCart = [PartCartrow, PartCartcol, PartCartz, IntList];
                 close(f)
                 Filename = append(obj.raw.path, filesep, 'PartCart.mat');
@@ -286,30 +309,58 @@ classdef Spheroid3D < handle
                 IntListIn = load(IntListInFile);
                 IntListIn = IntListIn.IntListIn;
             elseif ~exist(IntListRFile)
-                chunk_size = 10000; 
-                num_chunks = ceil(size(PartSph, 1) / chunk_size);
-                f = waitbar(0, 'Putting origin on spheroid edge (on GPU)');
-                IntCoord = zeros(size(PartSph, 1), 2);
-                SpheroidSph_gpu = SpheroidSph(:, 1:2); %gpuArray(SpheroidSph(:, 1:2));
-                SpheroidSph_z_gpu = SpheroidSph(:, 3); %gpuArray(SpheroidSph(:, 3)); 
-                PartSph_gpu = PartSph; %gpuArray(PartSph);
-                IntList = PartCart(:,4);
-                for chunk_idx = 1:num_chunks
-                    waitbar(chunk_idx / num_chunks, f, 'Putting origin on spheroid edge (on GPU)');
-                    chunk_start = (chunk_idx - 1) * chunk_size + 1;
-                    chunk_end = min(chunk_idx * chunk_size, size(PartSph, 1));
-                    current_chunk = PartSph_gpu(chunk_start:chunk_end, :);
-                    temp_IntCoord = zeros(size(current_chunk, 1), 2);
-                    parfor i = 1:size(current_chunk, 1)
-                        current_point_gpu = current_chunk(i, 1:2); %gpuArray(current_chunk(i, 1:2));
-                        distances_gpu = sqrt(sum((SpheroidSph_gpu - current_point_gpu).^2, 2));
-                        [Min, minIndex] = min(gather(distances_gpu));
-                        NewCoord = gather(SpheroidSph_z_gpu(minIndex)) - current_chunk(i, 3);
-                        temp_IntCoord(i, :) = [IntList(chunk_start + i - 1, 1), round(NewCoord)];
-                    end
-                    IntCoord(chunk_start:chunk_end, :) = temp_IntCoord;
-                end
-                close(f);
+                % chunk_size = 10000; 
+                % num_chunks = ceil(size(PartSph, 1) / chunk_size);
+                % f = waitbar(0, 'Putting origin on spheroid edge (on GPU)');
+                % IntCoord = zeros(size(PartSph, 1), 2);
+                % SpheroidSph_gpu = SpheroidSph(:, 1:2); %gpuArray(SpheroidSph(:, 1:2));
+                % SpheroidSph_z_gpu = SpheroidSph(:, 3); %gpuArray(SpheroidSph(:, 3)); 
+                % PartSph_gpu = PartSph; %gpuArray(PartSph);
+                % IntList = PartCart(:,4);
+                % for chunk_idx = 1:num_chunks
+                %     waitbar(chunk_idx / num_chunks, f, 'Putting origin on spheroid edge (on GPU)');
+                %     chunk_start = (chunk_idx - 1) * chunk_size + 1;
+                %     chunk_end = min(chunk_idx * chunk_size, size(PartSph, 1));
+                %     current_chunk = PartSph_gpu(chunk_start:chunk_end, :);
+                %     temp_IntCoord = zeros(size(current_chunk, 1), 2);
+                %     parfor i = 1:size(current_chunk, 1)
+                %         current_point_gpu = current_chunk(i, 1:2); %gpuArray(current_chunk(i, 1:2));
+                %         distances_gpu = sqrt(sum((SpheroidSph_gpu - current_point_gpu).^2, 2));
+                %         [Min, minIndex] = min(gather(distances_gpu));
+                %         NewCoord = gather(SpheroidSph_z_gpu(minIndex)) - current_chunk(i, 3);
+                %         temp_IntCoord(i, :) = [IntList(chunk_start + i - 1, 1), round(NewCoord)];
+                %     end
+                %     IntCoord(chunk_start:chunk_end, :) = temp_IntCoord;
+                % end
+                % close(f);
+
+                % 
+                % PartXY = PartSph(:, 1:2);
+                % SpheroidXY = SpheroidSph(:, 1:2);
+                % SpheroidZ = SpheroidSph(:, 3);
+                % IntList = PartCart(:, 4);
+                % Mdl = KDTreeSearcher(SpheroidXY);
+                % [Idx, ~] = knnsearch(Mdl, PartXY);  % Fast nearest neighbor lookup
+                % NewCoord = SpheroidZ(Idx) - PartSph(:, 3);
+                % IntCoord = [IntList, round(NewCoord)];
+
+                SpheroidXY = SpheroidSph(:, 1:2);
+                SpheroidZ  = SpheroidSph(:, 3);
+                PartXY     = PartSph(:, 1:2);
+                PartZ      = PartSph(:, 3);
+                IntList    = PartCart(:, 4);
+                Mdl = KDTreeSearcher(SpheroidXY);
+                k = 5;  % can increase slightly if data are noisy
+                [IdxK, ~] = knnsearch(Mdl, PartXY, 'K', k);
+                SpheroidZ_K = SpheroidZ(IdxK);      % N×k matrix of neighbor z-values
+                Zok = SpheroidZ_K > PartZ;          % N×k logical: TRUE if above
+                [hasValid, bestIdx] = max(Zok, [], 2);  % bestIdx = index of first TRUE in each row
+                linIdx = sub2ind(size(IdxK), (1:size(IdxK,1))', bestIdx);
+                finalIdx = IdxK(linIdx);
+                fallbackIdx = IdxK(:, 1);
+                finalIdx(~hasValid) = fallbackIdx(~hasValid);
+                NewCoord = SpheroidZ(finalIdx) - PartZ;
+                IntCoord = [IntList, round(NewCoord)];
 
                 IntListR = IntCoord;
                 IntListIn = IntListR;

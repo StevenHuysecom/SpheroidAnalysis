@@ -11,8 +11,9 @@ function LoadImages(file, chan)
     else
         %% make subfolder per sample       
         LifFiles = {};
+        h = waitbar(0, 'initializing');
         for i = 3:size(Folder, 1)
-            if strcmp(Folder(i).name(end-2:end), 'lif')
+            if and(strcmp(Folder(i).name(end-2:end), 'lif'), ~strcmp(Folder(i).name(1), '.'))
                 LifFiles{end+1,1} = Folder(i).name;
                 subfolder = Folder(i).name(1:end-4);
                 mkdir([file.path,filesep,subfolder])
@@ -24,10 +25,6 @@ function LoadImages(file, chan)
                     bfI.series = k;
                     ImageName = append('Position', num2str(k));
                     mkdir([file.path,filesep,subfolder,filesep,ImageName])
-                    
-                    PxSizes = bfI.pxSize;
-                    MatFileName = append(file.path,filesep,subfolder,filesep,ImageName,filesep,'PxSizes.mat');
-                    save(MatFileName, 'PxSizes')
 
                     for l = 1:bfI.sizeC
                         if strcmp(chan.(append('ch0', num2str(l))), 'ignore')
@@ -35,26 +32,58 @@ function LoadImages(file, chan)
                         elseif strcmp(chan.(append('ch0', num2str(l))), 'Membrane')
                             disp(append('Channel ', num2str(l), ' equals Membrane'))
                             for j = 1:bfI.sizeZ
-                                Membrane(:,:,j) = getPlane(bfI, j, l, 1);
+                                waitbar(k./bfI.seriesCount, h, append('Extracting position ', num2str(k), ' of ', num2str(bfI.seriesCount),...
+                                    ' / channel ', num2str(l), ' / slice ', num2str(j), ' of ', num2str(bfI.sizeZ)));
+                                stack = double(getPlane(bfI, j, l, 1));
+                                if all(size(stack) ~= [512, 512])
+                                    if j == 1
+                                        Scale = 512 ./ size(stack,1);
+                                    end
+                                    Membrane(:,:,j) = imresize(stack, Scale);
+                                else
+                                    Scale = 1;
+                                    Membrane(:,:,j) = stack;
+                                end
                             end
+                            waitbar(k./bfI.seriesCount, h, append('Extracting position ', num2str(k), ' of ', num2str(bfI.seriesCount),...
+                                    ' / channel ', num2str(l), ' / saving....'));
                             MatFileName = append(file.path,filesep,subfolder,filesep,ImageName,filesep,'Membrane.mat');
-                            save(MatFileName, 'Membrane')
+                            save(MatFileName, 'Membrane', '-v7.3');
                         elseif strcmp(chan.(append('ch0', num2str(l))), 'Particles')
                             disp(append('Channel ', num2str(l), ' equals Particles'))
                             for j = 1:bfI.sizeZ
-                                Particles(:,:,j) = getPlane(bfI, j, l, 1);
+                                waitbar(k./bfI.seriesCount, h, append('Extracting position ', num2str(k), ' of ', num2str(bfI.seriesCount),...
+                                    ' / channel ', num2str(l), ' / slice ', num2str(j), ' of ', num2str(bfI.sizeZ)));
+                                stack = double(getPlane(bfI, j, l, 1));
+                                if all(size(stack) ~= [512, 512])
+                                    if j == 1
+                                        Scale = 512 ./ size(stack,1);
+                                    end
+                                    Particles(:,:,j) = imresize(stack, Scale);
+                                else
+                                    Scale = 1;
+                                    Particles(:,:,j) = stack;
+                                end
                             end
+                            waitbar(k./bfI.seriesCount, h, append('Extracting position ', num2str(k), ' of ', num2str(bfI.seriesCount),...
+                                    ' / channel ', num2str(l), ' / saving....'));
                             MatFileName = append(file.path,filesep,subfolder,filesep,ImageName,filesep,'Particles.mat');
-                            save(MatFileName, 'Particles')
+                            save(MatFileName, 'Particles', '-v7.3');
                         else
                             error("Unknown channel detected - not membrane neither particles")
                         end
                     end
 
+                    PxSizes = bfI.pxSize;
+                    PxSizes(1:2) = PxSizes(1,2)./Scale;
+                    MatFileName = append(file.path,filesep,subfolder,filesep,ImageName,filesep,'PxSizes.mat');
+                    save(MatFileName, 'PxSizes')
+
                     clear Membrane Particles
                 end
             end
         end
+        close(h)
     end
 end
 

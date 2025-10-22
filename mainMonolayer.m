@@ -9,17 +9,16 @@ file.runSegmentation = 'run'; %load or run
 % info.pxSizeZ  = 1000;
 info.Membrane = 'excluded'; %included or excluded
 
-MainFolder = {'D:'};
-DimensionFolders = {'mini'};
-HourFolders = {'uptake nanorods in mcf7'};%'3hour', '24hour', '48hour'
-CellineFolders = {'MCF7_control_NR', 'MCF7_control_NRH2', 'MCF7_high_NR', 'MCF7_high_NRH2',...
-    'MCF7_low_NR', 'MCF7_low_NRH2'};
+MainFolder = {'D:\Rita'};
+DimensionFolders = {'2D_GCN_IGR37'};
+HourFolders = {'170 nm'};%'3hour', '24hour', '48hour'
+CellineFolders = {'3h'};
 
 %Give info about the channels, the word needs to be lowercase with no typos
 %care that the
-chan.ch01 = 'ignore';
-chan.ch02 = 'Membrane';
-chan.ch03 = 'Particles';
+chan.ch01 = 'Membrane';
+chan.ch02 = 'Particles';
+chan.ch03 = 'ignore';
 chan.ch04 = 'ignore';
 
 %% Loading data
@@ -28,7 +27,7 @@ for m = 1:numel(DimensionFolders)
     DimensionFolder = DimensionFolders{m};
     for a = 1:numel(HourFolders)
         HourFolder = HourFolders{a};
-        SliceMatrix = readmatrix(append(MainFolder{1,1}, filesep, DimensionFolder, filesep, 'SlicesNoPEI.xlsx'), 'Sheet', HourFolder);
+        SliceMatrix = readmatrix(append(MainFolder{1,1}, filesep, DimensionFolder, filesep, 'Slices.xlsx'), 'Sheet', HourFolder);
         for r = 1:numel(CellineFolders)
             try
                 CellineFolder = CellineFolders{r};
