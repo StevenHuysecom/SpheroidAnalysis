@@ -3,10 +3,11 @@ close all;
 clc;
 %% User Input
 file.ext  = '.lif';
-MainFolder = {'D:\Steven\Au@mSi'};
-DimensionFolders = {'2D'};
-HourFolders = {'3hour'}; %
-ParticleFolders = {'KM12C'};
+MainFolder = {'D:\'};
+DimensionFolders = {'mini'};
+HourFolders = {'uptake nanorods in mcf7'}; %
+ParticleFolders = {'MCF7_control_NR', 'MCF7_control_NRH2', 'MCF7_high_NR', 'MCF7_high_NRH2',...
+    'MCF7_low_NR', 'MCF7_low_NRH2'};
 
 BigMatrix = [];
 
@@ -16,7 +17,7 @@ for m = 1:numel(DimensionFolders)
         HourFolder = HourFolders{a};
         SliceMatrix = readmatrix(append(MainFolder{1,1}, filesep, DimensionFolder, filesep, 'SlicesNoPEI.xlsx'), 'Sheet', HourFolder);
         for r = 1:numel(ParticleFolders)
-            try
+            % try
                 ParticleFolder = ParticleFolders{r};
                 Path = append(MainFolder, filesep, DimensionFolder, filesep, HourFolder,...
                     filesep, ParticleFolder);
@@ -54,7 +55,7 @@ for m = 1:numel(DimensionFolders)
     
                                     stats = regionprops(MembrSegm, 'Area');
                                     VolList = (struct2array(stats)).';
-                                    VolList(VolList < 2700) = [];
+                                    VolList(VolList < 100) = [];
                                     NumCell = [NumCell; size(VolList, 1)];
                                     CellVolumes = [CellVolumes; VolList];
                                 end
@@ -67,7 +68,7 @@ for m = 1:numel(DimensionFolders)
                         CellVolumes = load(append(NewFolder(1).folder, filesep, "VolumeList.mat"));
                         CellVolumes = CellVolumes.VolumeList;
 
-                        if strcmp(ParticleFolder, 'A549')
+                        if strcmp(ParticleFolder, 'MCF7_control_NR')
                             Range1 = 'A1:A1';
                             Range2 = 'B2:B50';
                             Range3 = 'C2:C2500';
@@ -77,7 +78,7 @@ for m = 1:numel(DimensionFolders)
                             Range7 = 'D1:D1';
                             Range8 = 'E1:E1';
                             Range9 = 'C1:C1';
-                        elseif strcmp(ParticleFolder, 'HeLa')
+                        elseif strcmp(ParticleFolder, 'MCF7_control_NRH2')
                             Range1 = 'AA1:AA1';
                             Range2 = 'AB2:AB50';
                             Range3 = 'AC2:AC2500';
@@ -87,7 +88,7 @@ for m = 1:numel(DimensionFolders)
                             Range7 = 'AD1:AD1';
                             Range8 = 'AE1:AE1';
                             Range9 = 'AC1:AC1';
-                        elseif strcmp(ParticleFolder, 'KM12C')
+                        elseif strcmp(ParticleFolder, 'MCF7_high_NR')
                             Range1 = 'BA1:BA1';
                             Range2 = 'BB2:BB50';
                             Range3 = 'BC2:BC2500';
@@ -97,7 +98,7 @@ for m = 1:numel(DimensionFolders)
                             Range7 = 'BD1:BD1';
                             Range8 = 'BE1:BE1';
                             Range9 = 'BC1:BC1';
-                        elseif strcmp(ParticleFolder, 'MCF7')
+                        elseif strcmp(ParticleFolder, 'MCF7_high_NRH2')
                             Range1 = 'CA1:CA1';
                             Range2 = 'CB2:CB50';
                             Range3 = 'CC2:CC2500';
@@ -107,6 +108,26 @@ for m = 1:numel(DimensionFolders)
                             Range7 = 'CD1:CD1';
                             Range8 = 'CE1:CE1';
                             Range9 = 'CC1:CC1';
+                        elseif strcmp(ParticleFolder, 'MCF7_low_NR')
+                            Range1 = 'DA1:DA1';
+                            Range2 = 'DB2:DB50';
+                            Range3 = 'DC2:DC2500';
+                            Range4 = 'DD2:DD2500';
+                            Range5 = 'DE2:DE2500';
+                            Range6 = 'DB1:DB1';
+                            Range7 = 'DD1:DD1';
+                            Range8 = 'DE1:DE1';
+                            Range9 = 'DC1:DC1';
+                        elseif strcmp(ParticleFolder, 'MCF7_low_NRH2')
+                            Range1 = 'EA1:EA1';
+                            Range2 = 'EB2:EB50';
+                            Range3 = 'EC2:EC2500';
+                            Range4 = 'ED2:ED2500';
+                            Range5 = 'EE2:EE2500';
+                            Range6 = 'EB1:EB1';
+                            Range7 = 'ED1:ED1';
+                            Range8 = 'EE1:EE1';
+                            Range9 = 'EC1:EC1';
                         end
             
                         %% abs intensities
@@ -154,8 +175,8 @@ for m = 1:numel(DimensionFolders)
                     else
                     end 
                 end     
-            catch
-            end
+            % catch
+            % end
         end
     end
 end
