@@ -7,7 +7,7 @@ file.ext  = '.lif';
 MainFolder = {'D:\'};
 DimensionFolders = {'Rita'};
 HourFolders = {'3D_GCN_IGR37'};
-ParticleFolders = {'170 nm'};
+ParticleFolders = {'170 nm', '200 nm', '230 nm', 'Control'};
 
 
 %Give info about the channels, the word needs to be lowercase with no typos

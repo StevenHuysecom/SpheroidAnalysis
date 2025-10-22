@@ -11,8 +11,8 @@ info.Membrane = 'excluded'; %included or excluded
 
 MainFolder = {'D:\Rita'};
 DimensionFolders = {'2D_GCN_IGR37'};
-HourFolders = {'170 nm'};%'3hour', '24hour', '48hour'
-CellineFolders = {'3h'};
+HourFolders = {'170 nm', '200 nm', '230 nm'};%'3hour', '24hour', '48hour'
+CellineFolders = {'3h', '24h'};
 
 %Give info about the channels, the word needs to be lowercase with no typos
 %care that the
@@ -78,6 +78,7 @@ for m = 1:numel(DimensionFolders)
                                 catch
                                     continue
                                 end
+                                close all
                             end
                             filenameCell = append(SubFolder(1).folder, filesep,'CellInt.mat');
                             filenameMembr = append(SubFolder(1).folder, filesep,'MembrInt.mat');
