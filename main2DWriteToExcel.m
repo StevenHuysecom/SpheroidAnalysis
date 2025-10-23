@@ -3,11 +3,10 @@ close all;
 clc;
 %% User Input
 file.ext  = '.lif';
-MainFolder = {'D:\'};
-DimensionFolders = {'mini'};
-HourFolders = {'uptake nanorods in mcf7'}; %
-ParticleFolders = {'MCF7_control_NR', 'MCF7_control_NRH2', 'MCF7_high_NR', 'MCF7_high_NRH2',...
-    'MCF7_low_NR', 'MCF7_low_NRH2'};
+MainFolder = {'D:\Rita'};
+DimensionFolders = {'2D_GCN_IGR37'};
+HourFolders = {'170 nm', '200 nm', '230 nm'}; %
+ParticleFolders = {'3h', '24h'};
 
 BigMatrix = [];
 
@@ -15,7 +14,7 @@ for m = 1:numel(DimensionFolders)
     DimensionFolder = DimensionFolders{m};
     for a = 1:numel(HourFolders)
         HourFolder = HourFolders{a};
-        SliceMatrix = readmatrix(append(MainFolder{1,1}, filesep, DimensionFolder, filesep, 'SlicesNoPEI.xlsx'), 'Sheet', HourFolder);
+        SliceMatrix = readmatrix(append(MainFolder{1,1}, filesep, DimensionFolder, filesep, 'Slices.xlsx'), 'Sheet', HourFolder);
         for r = 1:numel(ParticleFolders)
             % try
                 ParticleFolder = ParticleFolders{r};
@@ -68,7 +67,7 @@ for m = 1:numel(DimensionFolders)
                         CellVolumes = load(append(NewFolder(1).folder, filesep, "VolumeList.mat"));
                         CellVolumes = CellVolumes.VolumeList;
 
-                        if strcmp(ParticleFolder, 'MCF7_control_NR')
+                        if strcmp(ParticleFolder, '3h')
                             Range1 = 'A1:A1';
                             Range2 = 'B2:B50';
                             Range3 = 'C2:C2500';
@@ -78,7 +77,7 @@ for m = 1:numel(DimensionFolders)
                             Range7 = 'D1:D1';
                             Range8 = 'E1:E1';
                             Range9 = 'C1:C1';
-                        elseif strcmp(ParticleFolder, 'MCF7_control_NRH2')
+                        elseif strcmp(ParticleFolder, '24h')
                             Range1 = 'AA1:AA1';
                             Range2 = 'AB2:AB50';
                             Range3 = 'AC2:AC2500';

@@ -3,10 +3,10 @@ close all;
 clc;
 %% User Input
 file.ext  = '.lif';
-MainFolder = {'D:\Steven\Au@mSi'};
-DimensionFolders = {'3D'};
-HourFolders = {'48hour'};
-ParticleFolders = {'HeLa'};
+MainFolder = {'D:\'};
+DimensionFolders = {'Rita\3D_GCN_IGR37'};
+HourFolders = {'170 nm', '200 nm', '230 nm', 'Control'};
+ParticleFolders = {''};
 
 BigMatrix = [];
 
@@ -15,10 +15,11 @@ for m = 1:numel(DimensionFolders)
     for a = 1:numel(HourFolders)
         HourFolder = HourFolders{a};
         for r = 1:numel(ParticleFolders)
-            try
+            % try
                 ParticleFolder = ParticleFolders{r};
-                Path = append(MainFolder, filesep, DimensionFolder, filesep, HourFolder,...
-                    filesep, ParticleFolder);
+                % Path = append(MainFolder, filesep, DimensionFolder, filesep, HourFolder,...
+                %     filesep, ParticleFolder);
+                Path = append(MainFolder, filesep, DimensionFolder, filesep, HourFolder);
                 file.path = Path{1,1};
 
                 Folder  = dir(Path{1,1});
@@ -27,35 +28,35 @@ for m = 1:numel(DimensionFolders)
                     if Folder(i).isdir == 1
                         file.path = append(Folder(i).folder, filesep, Folder(i).name);
 
-                        if strcmp(ParticleFolder, 'A549')
+                        % if strcmp(ParticleFolder, 'A549')
                             Range1 = 'A3:Z503';
                             Range2 = 'B1:Z1';
                             Range3 = 'A1:A1';
-                        elseif strcmp(ParticleFolder, 'HeLa')
-                            Range1 = 'AA3:AZ503';
-                            Range2 = 'AB1:AZ1';
-                            Range3 = 'AA1:AA1';
-                        elseif strcmp(ParticleFolder, 'KM12C')
-                            Range1 = 'BA3:BZ503';
-                            Range2 = 'BB1:BZ1';
-                            Range3 = 'BA1:BA1';
-                        elseif strcmp(ParticleFolder, 'MCF7')
-                            Range1 = 'CA3:CZ503';
-                            Range2 = 'CB1:CZ1';
-                            Range3 = 'CA1:CA1';
-                        end
-            
+                        % elseif strcmp(ParticleFolder, 'HeLa')
+                        %     Range1 = 'AA3:AZ503';
+                        %     Range2 = 'AB1:AZ1';
+                        %     Range3 = 'AA1:AA1';
+                        % elseif strcmp(ParticleFolder, 'KM12C')
+                        %     Range1 = 'BA3:BZ503';
+                        %     Range2 = 'BB1:BZ1';
+                        %     Range3 = 'BA1:BA1';
+                        % elseif strcmp(ParticleFolder, 'MCF7')
+                        %     Range1 = 'CA3:CZ503';
+                        %     Range2 = 'CB1:CZ1';
+                        %     Range3 = 'CA1:CA1';
+                        % end
+                        % 
                         IntProfile = load(append(file.path, filesep, 'IntMatrix.mat'));
                         IntProfile = IntProfile.IntMatrix;   
-                        writematrix(IntProfile, append(MainFolder{1}, filesep, 'Results3D.xlsx'), 'Sheet', HourFolder, 'Range', Range1);
+                        writematrix(IntProfile, append(MainFolder{1}, filesep, DimensionFolder, filesep, 'Results3D.xlsx'), 'Sheet', HourFolder, 'Range', Range1);
                         IntTot = load(append(file.path, filesep, 'SpheroidIntTotal.mat'));
                         IntTot = IntTot.SpheroidInt;
-                        writematrix(IntTot, append(MainFolder{1}, filesep, 'Results3D.xlsx'), 'Sheet', HourFolder, 'Range', Range2);
-                        writecell({ParticleFolder}, append(MainFolder{1}, filesep, 'Results3D.xlsx'), 'Sheet', HourFolder, 'Range', Range3);
+                        writematrix(IntTot, append(MainFolder{1}, filesep, DimensionFolder, filesep, 'Results3D.xlsx'), 'Sheet', HourFolder, 'Range', Range2);
+                        writecell({ParticleFolder}, append(MainFolder{1}, filesep, DimensionFolder, filesep, 'Results3D.xlsx'), 'Sheet', HourFolder, 'Range', Range3);
                     end
                 end   
-            catch
-            end
+            % catch
+            % end
         end
     end
 end
