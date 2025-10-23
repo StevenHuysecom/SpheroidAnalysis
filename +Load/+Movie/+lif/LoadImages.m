@@ -70,7 +70,25 @@ function LoadImages(file, chan)
                             MatFileName = append(file.path,filesep,subfolder,filesep,ImageName,filesep,'Particles.mat');
                             save(MatFileName, 'Particles', '-v7.3');
                         else
-                            error("Unknown channel detected - not membrane neither particles")
+                            disp(append('Channel ', num2str(l), ' equals ', chan.(append('ch0', num2str(l)))))
+                            for j = 1:bfI.sizeZ
+                                waitbar(k./bfI.seriesCount, h, append('Extracting position ', num2str(k), ' of ', num2str(bfI.seriesCount),...
+                                    ' / channel ', num2str(l), ' / slice ', num2str(j), ' of ', num2str(bfI.sizeZ)));
+                                stack = double(getPlane(bfI, j, l, 1));
+                                if all(size(stack) ~= [512, 512])
+                                    if j == 1
+                                        Scale = 512 ./ size(stack,1);
+                                    end
+                                    Channel(:,:,j) = imresize(stack, Scale);
+                                else
+                                    Scale = 1;
+                                    Channel(:,:,j) = stack;
+                                end
+                            end
+                            waitbar(k./bfI.seriesCount, h, append('Extracting position ', num2str(k), ' of ', num2str(bfI.seriesCount),...
+                                    ' / channel ', num2str(l), ' / saving....'));
+                            MatFileName = append(file.path,filesep,subfolder,filesep,ImageName,filesep, chan.(append('ch0', num2str(l))), '.mat');
+                            save(MatFileName, 'Channel', '-v7.3');
                         end
                     end
 
