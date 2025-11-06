@@ -10,7 +10,7 @@ file.runSegmentation = 'run'; %load or run
 info.Membrane = 'excluded'; %included or excluded
 
 MainFolder = {'D:\Rita'};
-DimensionFolders = {'2D_GCN_IGR37'};
+DimensionFolders = {'2D_GCN_A549'};
 HourFolders = {'170 nm', '200 nm', '230 nm'};%'3hour', '24hour', '48hour'
 CellineFolders = {'3h', '24h'};
 
@@ -27,7 +27,7 @@ for m = 1:numel(DimensionFolders)
     DimensionFolder = DimensionFolders{m};
     for a = 1:numel(HourFolders)
         HourFolder = HourFolders{a};
-        SliceMatrix = readmatrix(append(MainFolder{1,1}, filesep, DimensionFolder, filesep, 'Slices.xlsx'), 'Sheet', HourFolder);
+        SliceMatrix = readmatrix(append(MainFolder{1,1}, filesep, DimensionFolder, filesep, 'Slices_A549.xlsx'), 'Sheet', HourFolder);
         for r = 1:numel(CellineFolders)
             try
                 CellineFolder = CellineFolders{r};
