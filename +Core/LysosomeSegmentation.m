@@ -102,16 +102,16 @@ classdef LysosomeSegmentation < handle
 
         function SegmentChannels(obj)
             ChannelNames = fieldnames(obj.channels);
-            for i = 1:size(obj.channels, 1)
+            for i = 1:size(ChannelNames, 1)
                 ChannelName = ChannelNames{i};
                 Channel = obj.channels.(ChannelName);
 
                 if strcmp(ChannelName, 'Lamp1')
-                    ChannelSeg = obj.BigLysosomeSegmentation(Channel);
+                    ChannelSeg = obj.Segmentation(Channel, ChannelName);
                 elseif strcmp(ChannelName, 'Lysotracker')
-                    ChannelSeg = obj.SmallLysosomeSegmentation(Channel);
+                    ChannelSeg = obj.Segmentation(Channel, ChannelName);
                 elseif strcmp(ChannelName, 'Particles')
-                    ChannelSeg = obj.SmallLysosomeSegmentation(Channel);
+                    ChannelSeg = obj.Segmentation(Channel, ChannelName);
                 else
                     error('Could not find channel name, check typo')
                 end
@@ -120,7 +120,7 @@ classdef LysosomeSegmentation < handle
             end
         end
 
-        function [Segment] = BigLysosomeSegmentation(obj, Channel)
+        function [Segment] = Segmentation(obj, Channel, ChannelName)
 
             CurrFrameBg = Channel - imgaussfilt(Channel, 10);
             CurrFrameBg(CurrFrameBg < 0) = 0;
@@ -134,24 +134,54 @@ classdef LysosomeSegmentation < handle
             for k = 1:numel(props)
                 out(props(k).PixelIdxList) = props(k).MaxIntensity;
             end
-            thresh = 0.2 * prctile(out(out > 0), 99);
-            out(out < thresh) = 0;
-            out = imclose(out, strel('disk', 2));
-            out = imerode(out, strel('disk', 1));
-            mask = imfill(out, 'holes');
-            mask = mask & ~bwareaopen(mask, 1000);
-            figure()
+            % thresh = 0.2 * prctile(out(out > 0), 99);
+            % out(out < thresh) = 0;
+            % out = imclose(out, strel('disk', 2));
+            % out = imerode(out, strel('disk', 1));
+            Segment = imfill(out, 'holes');
+            Segment(Segment ~= 0) = 1;
+
+
+            LysosomeHoles = CurrFrameBg;
+            LysosomeHoles(LysosomeHoles ~= 0) = 1;
+            LysosomeHoles = bwareaopen(LysosomeHoles, 50);
+            kernel = [0 1 0; 1 0 1; 0 1 0];
+            neighborCount = conv2(double(LysosomeHoles), kernel, 'same');
+            toActivate = (LysosomeHoles == 0) & (neighborCount >= 2);
+            LysosomeHoles(toActivate == 1) = 1;
+            InnerLys = imfill(LysosomeHoles, 'holes');
+            InnerLys(LysosomeHoles == 1) = 0;
+            InnerLys = bwareaopen(InnerLys, 50);
+            InnerLys = imdilate(InnerLys, strel('disk', 3));
+
+
+            CC = bwconncomp(InnerLys, 8);  % use 8-connectivity (can change to 4 if needed)
+            toAdd = false(size(Segment));
+            SegmentDilated = Segment;
+            for k = 1:CC.NumObjects
+                pixels = CC.PixelIdxList{k};
+                if sum(SegmentDilated(pixels)) > 50
+                    toAdd(pixels) = true;
+                end
+            end
+            Segment = Segment | toAdd;
+
+            Fig = figure()
             subplot(1,3,1)
             imagesc(Channel)
             title('raw data')
             axis image
             subplot(1,3,2)
-            imagesc(mask)
+            imagesc(Segment)
             title('mask')
             axis image
             subplot(1,3,3)
-            imshowpair(Channel, mask)
+            imshowpair(Channel, Segment)
             title('overlay')
+            sgtitle(ChannelName)
+
+            FigPath = append(obj.raw.path, filesep, 'mask_', ChannelName, '.png');
+            saveas(Fig, FigPath);
         end
 
         function [Segment] = SmallLysosomeSegmentation(obj, Channel)
