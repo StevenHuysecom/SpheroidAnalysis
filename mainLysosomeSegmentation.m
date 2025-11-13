@@ -15,8 +15,8 @@ CellineFolders = {'lamp1 confocal test for steven'};
 
 %Give info about the channels, the word needs to be lowercase with no typos
 %care that the
-chan.ch01 = 'Lysotracker';
-chan.ch02 = 'IetAnders';
+chan.ch01 = 'Lamp1';
+chan.ch02 = 'Lysotracker';
 chan.ch03 = 'Particles';
 chan.ch04 = 'ignore';
 
@@ -51,6 +51,7 @@ for a = 1:numel(HourFolders)
                                     stack = Core.LysosomeSegmentation(file,info);
                                     stack.loadDataBioform(chan);
                                     stack.showChannel;
+                                    stack.SegmentChannels;
                                 end
                             close all
                         end

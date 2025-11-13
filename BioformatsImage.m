@@ -290,7 +290,11 @@ classdef BioformatsImage
 
             pxSizeX = double(obj.metadata.getPixelsPhysicalSizeX(0).value);
             pxSizeY = double(obj.metadata.getPixelsPhysicalSizeY(0).value);
-            pxSizeZ = double(obj.metadata.getPixelsPhysicalSizeZ(0).value);
+            try
+                pxSizeZ = double(obj.metadata.getPixelsPhysicalSizeZ(0).value);
+            catch
+                pxSizeZ = 0;
+            end
 
             pxSize = [pxSizeX, pxSizeY, pxSizeZ];
 
