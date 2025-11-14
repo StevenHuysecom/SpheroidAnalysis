@@ -6,8 +6,12 @@ file.ext  = '.lif';
 file.runSegmentation = 'run'; %load or run
 file.drawROI = 'off'; %'off', or channel name
 
+% info.pxSizeXY = 454.5; 
+% info.pxSizeZ  = 1000;
+info.Membrane = 'excluded'; %included or excluded
+
 MainFolder = {'D:'};
-HourFolders = {'mini'};
+HourFolders = {'mini'};%'3hour', '24hour', '48hour'
 CellineFolders = {'lamp1 confocal test for steven'};
 
 %Give info about the channels, the word needs to be lowercase with no typos
@@ -27,7 +31,7 @@ for a = 1:numel(HourFolders)
         file.path = Path{1,1};
 
         Load.Movie.lif.LoadImages(file, chan);
-        Load.Movie.DrawApplyROI(file, chan, 1);
+        % Load.Movie.DrawApplyROI(file, chan, 1);
 
         CurrentFolder = dir(file.path);
         CurrentFolder(1:2) = [];
@@ -46,7 +50,7 @@ for a = 1:numel(HourFolders)
                     if isSubDirColumn(j,1) == 1
                         file.path = append(SubFolder(j).folder, filesep, SubFolder(j).name);
 
-                        stack = Core.LysosomeSegmentation(file);
+                        stack = Core.LysosomeSegmentation(file,info);
                         stack.loadDataBioform(chan);
                         stack.showChannel;
                         stack.SegmentChannels;
@@ -86,8 +90,9 @@ for a = 1:numel(HourFolders)
                     T = array2table(data, 'VariableNames', varNames);
                     ResultsTables.(field) = T;
 
-                    writetable(T, append(Path{1}, filesep, 'ResultsCorrelation.xlsx'), 'Sheet', field);
+                    writetable(T, append(Path, file))
                 end
+
             end
         end
     end

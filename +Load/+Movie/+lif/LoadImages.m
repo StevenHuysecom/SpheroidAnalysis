@@ -104,4 +104,3 @@ function LoadImages(file, chan)
         close(h)
     end
 end
-

@@ -11,11 +11,10 @@ classdef LysosomeSegmentation < handle
     end
     
     methods
-        function obj = LysosomeSegmentation(raw,info)
+        function obj = LysosomeSegmentation(raw)
             %UNTITLED Construct an instance of this class
             %   Detailed explanation goes here
             obj.raw = raw;
-            obj.info = info;
         end
         
         function set.raw(obj,raw)
@@ -81,11 +80,12 @@ classdef LysosomeSegmentation < handle
         function showChannel(obj)
             channel = obj.getChannel;
             field = fieldnames(channel);
-            
+            field(strcmp(field, 'ignore')) = [];
+
             nField = length(field);
             sliceToShow = round(size(channel.(field{1}),3)/2);
             frameToShow = round(size(channel.(field{1}),4)/2);
-            figure
+            Fig = figure
             for i = 1:nField
                 subplot(1,nField,i)
                 currChan = channel.(field{i});
@@ -98,6 +98,7 @@ classdef LysosomeSegmentation < handle
                 colormap('hot');
                 title(field{i})
             end
+            saveas(Fig, append(obj.raw.path, filesep, 'AllChannels.png'))
         end
 
         function SegmentChannels(obj)
@@ -112,6 +113,8 @@ classdef LysosomeSegmentation < handle
                     ChannelSeg = obj.Segmentation(Channel, ChannelName);
                 elseif strcmp(ChannelName, 'Particles')
                     ChannelSeg = obj.Segmentation(Channel, ChannelName);
+                elseif strcmp(ChannelName, 'ignore')
+                    disp(append('Channel ', num2str(i), ' ignored'));
                 else
                     error('Could not find channel name, check typo')
                 end
@@ -184,7 +187,84 @@ classdef LysosomeSegmentation < handle
             saveas(Fig, FigPath);
         end
 
-        function [Segment] = SmallLysosomeSegmentation(obj, Channel)
+        function [Results] = CrossCorrelation(obj)
+            channels_raw = obj.channels;
+            channels_mask = obj.channelsSegm;
+            
+            channelnames = fieldnames(obj.channels); 
+            pairs = {{channelnames{1},channelnames{2}}, {channelnames{1},channelnames{3}}, {channelnames{2},channelnames{3}}};
+
+            Results = [];
+            for k = 1:length(pairs)
+            
+                nameA = pairs{k}{1};
+                nameB = pairs{k}{2};
+            
+                fprintf('\n=== %s vs %s ===\n', nameA, nameB);
+
+                A_raw = double(channels_raw.(nameA));
+                B_raw = double(channels_raw.(nameB));
+
+                A_mask = logical(channels_mask.(nameA));
+                B_mask = logical(channels_mask.(nameB));
+            
+                % ---- 1. Pixel overlap (% of masks) ----
+                overlap = A_mask & B_mask;
+                percA_in_B = 100 * sum(overlap(:)) / sum(A_mask(:));
+                percB_in_A = 100 * sum(overlap(:)) / sum(B_mask(:));
+            
+                fprintf('Pixel overlap: %s in %s = %.2f%%\n', nameA, nameB, percA_in_B);
+                fprintf('Pixel overlap: %s in %s = %.2f%%\n', nameB, nameA, percB_in_A);
+            
+                % ---- Create masked raw images (best practice for Manders & Pearson) ----
+                A_masked = A_raw .* A_mask;
+                B_masked = B_raw .* B_mask;
+            
+                % ---- 2. Manders (on masked raw images) ----
+                A_positive = A_masked > 0;
+                B_positive = B_masked > 0;
+
+                M1 = sum(A_masked(overlap)) / sum(A_masked(A_positive));
+                M2 = sum(B_masked(overlap)) / sum(B_masked(B_positive));
+            
+                fprintf('Manders M1 (%s in %s): %.4f\n', nameA, nameB, M1);
+                fprintf('Manders M2 (%s in %s): %.4f\n', nameB, nameA, M2);
+            
+                % ---- 3. Pearson correlation (on masked raw intensity union region) ----
+                maskUnion = A_mask | B_mask;
+            
+                A_vals = A_raw(maskUnion);
+                B_vals = B_raw(maskUnion);
+            
+                pcc = corr(A_vals(:), B_vals(:));
+                fprintf('Pearson correlation: %.4f\n', pcc);
+
+                obj.results.(append(nameA, '_', nameB)) = [percA_in_B, percB_in_A, M1, M2, pcc];
+                
+            end
+            Results = obj.results;
+            fields = fieldnames(Results);
+            ResultsTables = struct();
+            for s = 1:numel(fields)
+                field = fields{s};
+                data = Results.(field);   % n × 5 matrix
+
+                parts = split(field, '_');
+                nameA = string(parts{1});
+                nameB = string(parts{2});
+
+                varNames = { ...
+                    sprintf('PxOverlap_%s_in_%s', nameA, nameB), ...
+                    sprintf('PxOverlap_%s_in_%s', nameB, nameA), ...
+                    sprintf('Manders_%s_in_%s', nameA, nameB), ...
+                    sprintf('Manders_%s_in_%s', nameB, nameA), ...
+                    'Pearson' ...
+                };
+            
+                T = array2table(data, 'VariableNames', varNames);
+                ResultsTables.(field) = T;
+            end
+            save(append(obj.raw.path, filesep, 'CorrelationResults.mat'), 'ResultsTables')
         end
     end
 end
