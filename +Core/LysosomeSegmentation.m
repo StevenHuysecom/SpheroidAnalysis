@@ -85,7 +85,7 @@ classdef LysosomeSegmentation < handle
             nField = length(field);
             sliceToShow = round(size(channel.(field{1}),3)/2);
             frameToShow = round(size(channel.(field{1}),4)/2);
-            Fig = figure
+            Fig = figure;
             for i = 1:nField
                 subplot(1,nField,i)
                 currChan = channel.(field{i});
@@ -169,7 +169,7 @@ classdef LysosomeSegmentation < handle
             end
             Segment = Segment | toAdd;
 
-            Fig = figure()
+            Fig = figure();
             subplot(1,3,1)
             imagesc(Channel)
             title('raw data')
@@ -213,8 +213,8 @@ classdef LysosomeSegmentation < handle
                 percA_in_B = 100 * sum(overlap(:)) / sum(A_mask(:));
                 percB_in_A = 100 * sum(overlap(:)) / sum(B_mask(:));
             
-                fprintf('Pixel overlap: %s in %s = %.2f%%\n', nameA, nameB, percA_in_B);
-                fprintf('Pixel overlap: %s in %s = %.2f%%\n', nameB, nameA, percB_in_A);
+                fprintf('Pixel overlap: percentage of %s containing %s = %.2f%%\n', nameA, nameB, percA_in_B);
+                fprintf('Pixel overlap: percentage of %s containing %s = %.2f%%\n', nameB, nameA, percB_in_A);
             
                 % ---- Create masked raw images (best practice for Manders & Pearson) ----
                 A_masked = A_raw .* A_mask;
@@ -227,8 +227,8 @@ classdef LysosomeSegmentation < handle
                 M1 = sum(A_masked(overlap)) / sum(A_masked(A_positive));
                 M2 = sum(B_masked(overlap)) / sum(B_masked(B_positive));
             
-                fprintf('Manders M1 (%s in %s): %.4f\n', nameA, nameB, M1);
-                fprintf('Manders M2 (%s in %s): %.4f\n', nameB, nameA, M2);
+                fprintf('Manders M1 (percentage of %s containing %s): %.4f\n', nameA, nameB, M1);
+                fprintf('Manders M2 (percentage of %s containing %s): %.4f\n', nameB, nameA, M2);
             
                 % ---- 3. Pearson correlation (on masked raw intensity union region) ----
                 maskUnion = A_mask | B_mask;
@@ -254,10 +254,10 @@ classdef LysosomeSegmentation < handle
                 nameB = string(parts{2});
 
                 varNames = { ...
-                    sprintf('PxOverlap_%s_in_%s', nameA, nameB), ...
-                    sprintf('PxOverlap_%s_in_%s', nameB, nameA), ...
-                    sprintf('Manders_%s_in_%s', nameA, nameB), ...
-                    sprintf('Manders_%s_in_%s', nameB, nameA), ...
+                    sprintf('PxOverlap fraction_of_%s_containing_%s', nameA, nameB), ...
+                    sprintf('PxOverlap fraction_of_%s_containing_%s', nameB, nameA), ...
+                    sprintf('Manders fraction_of_%s_containing_%s', nameA, nameB), ...
+                    sprintf('Manders fraction_of_%s_containing_%s', nameB, nameA), ...
                     'Pearson' ...
                 };
             
