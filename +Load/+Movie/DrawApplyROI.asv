@@ -15,7 +15,7 @@ function DrawApplyROI(file, chan, frame)
             ChName = fieldnames(Raw);
             Raw = Raw.(ChName{1});
 
-            fig = figure('WindowState','fullscreen');
+            fig = figure();
             ChannelNames = fieldnames(chan);
             ChNames = {};
             for j = 1:size(ChannelNames, 1)
@@ -40,7 +40,6 @@ function DrawApplyROI(file, chan, frame)
 
             SelectedAxis = subplot(1,size(ChNames, 1),find(strcmp(ChNames, file.drawROI)));
             axes(SelectedAxis);
-            title(append(ChNames{find(strcmp(ChNames, file.drawROI)),1}, ' - Draw ROI'));
             h = drawfreehand(SelectedAxis);
             mask(:,:,i-2) = createMask(h);
             close(fig)

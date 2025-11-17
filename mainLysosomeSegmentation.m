@@ -17,6 +17,10 @@ chan.ch02 = 'Lysotracker';
 chan.ch03 = 'Particles';
 chan.ch04 = 'ignore';
 
+%some parameters
+slice = 1; %which slice of the 3D stack to select the ROI on
+Threshold = 0.10; %[0-1], keep it under 0.15, intensity threshold for lysosomes (high = throw away dim/out-of-focus lysosomes)
+
 %% Loading data
 
 for a = 1:numel(HourFolders)
@@ -27,8 +31,17 @@ for a = 1:numel(HourFolders)
         file.path = Path{1,1};
 
         Load.Movie.lif.LoadImages(file, chan);
-        Load.Movie.DrawApplyROI(file, chan, 1);
+        Load.Movie.DrawApplyROI(file, chan, slice);
+    end
+end
 
+
+for a = 1:numel(HourFolders)
+    HourFolder = HourFolders{a};
+    for r = 1:numel(CellineFolders)
+        CellineFolder = CellineFolders{r};
+        Path = append(MainFolder, filesep, HourFolder, filesep, CellineFolder);
+        file.path = Path{1,1};
         CurrentFolder = dir(file.path);
         CurrentFolder(1:2) = [];
         isDirColumn = [CurrentFolder.isdir]';
@@ -49,7 +62,7 @@ for a = 1:numel(HourFolders)
                         stack = Core.LysosomeSegmentation(file);
                         stack.loadDataBioform(chan);
                         stack.showChannel;
-                        stack.SegmentChannels;
+                        stack.SegmentChannels(Threshold);
 
                         [Results] = stack.CrossCorrelation;
                     end

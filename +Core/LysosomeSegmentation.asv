@@ -101,18 +101,18 @@ classdef LysosomeSegmentation < handle
             saveas(Fig, append(obj.raw.path, filesep, 'AllChannels.png'))
         end
 
-        function SegmentChannels(obj, Threshold)
+        function SegmentChannels(obj)
             ChannelNames = fieldnames(obj.channels);
             for i = 1:size(ChannelNames, 1)
                 ChannelName = ChannelNames{i};
                 Channel = obj.channels.(ChannelName);
 
                 if strcmp(ChannelName, 'Lamp1')
-                    ChannelSeg = obj.Segmentation(Channel, ChannelName, Threshold);
+                    ChannelSeg = obj.Segmentation(Channel, ChannelName);
                 elseif strcmp(ChannelName, 'Lysotracker')
-                    ChannelSeg = obj.Segmentation(Channel, ChannelName, Threshold);
+                    ChannelSeg = obj.Segmentation(Channel, ChannelName);
                 elseif strcmp(ChannelName, 'Particles')
-                    ChannelSeg = obj.Segmentation(Channel, ChannelName, Threshold);
+                    ChannelSeg = obj.Segmentation(Channel, ChannelName);
                 elseif strcmp(ChannelName, 'ignore')
                     disp(append('Channel ', num2str(i), ' ignored'));
                 else
@@ -123,7 +123,7 @@ classdef LysosomeSegmentation < handle
             end
         end
 
-        function [Segment] = Segmentation(obj, Channel, ChannelName, Threshold)
+        function [Segment] = Segmentation(obj, Channel, ChannelName)
 
             CurrFrameBg = Channel - imgaussfilt(Channel, 10);
             CurrFrameBg(CurrFrameBg < 0) = 0;
@@ -131,7 +131,7 @@ classdef LysosomeSegmentation < handle
             
             CurrFrameSmooth = medfilt2(CurrFrameBg, [3 3]);
             CurrFrameSmooth(CurrFrameBg == 0) = 0;
-            labels = bwlabeln(CurrFrameSmooth > Threshold);
+            labels = bwlabeln(CurrFrameSmooth > 0.25);
             props = regionprops(labels, CurrFrameSmooth, 'PixelIdxList', 'MaxIntensity');
             out = zeros(size(CurrFrameSmooth));
             for k = 1:numel(props)
