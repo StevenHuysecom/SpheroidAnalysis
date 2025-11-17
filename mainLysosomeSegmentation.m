@@ -19,7 +19,7 @@ chan.ch04 = 'ignore';
 
 %some parameters
 slice = 1; %which slice of the 3D stack to select the ROI on
-Threshold = 0.10; %[0-1], keep it under 0.15, intensity threshold for lysosomes (high = throw away dim/out-of-focus lysosomes)
+Threshold = [0.30, 0.30, 0.30]; %[0-1], keep it under 0.15, intensity threshold for lysosomes (high = throw away dim/out-of-focus lysosomes)
 
 %% Loading data
 

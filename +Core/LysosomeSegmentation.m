@@ -108,11 +108,11 @@ classdef LysosomeSegmentation < handle
                 Channel = obj.channels.(ChannelName);
 
                 if strcmp(ChannelName, 'Lamp1')
-                    ChannelSeg = obj.Segmentation(Channel, ChannelName, Threshold);
+                    ChannelSeg = obj.Segmentation(Channel, ChannelName, Threshold(i));
                 elseif strcmp(ChannelName, 'Lysotracker')
-                    ChannelSeg = obj.Segmentation(Channel, ChannelName, Threshold);
+                    ChannelSeg = obj.Segmentation(Channel, ChannelName, Threshold(i));
                 elseif strcmp(ChannelName, 'Particles')
-                    ChannelSeg = obj.Segmentation(Channel, ChannelName, Threshold);
+                    ChannelSeg = obj.Segmentation(Channel, ChannelName, Threshold(i));
                 elseif strcmp(ChannelName, 'ignore')
                     disp(append('Channel ', num2str(i), ' ignored'));
                 else
@@ -183,7 +183,7 @@ classdef LysosomeSegmentation < handle
             title('overlay')
             sgtitle(ChannelName)
 
-            FigPath = append(obj.raw.path, filesep, 'mask_', ChannelName, '.png');
+            FigPath = append(obj.raw.path, filesep, 'mask_', ChannelName, 'Threshold_all0.30_.png');
             saveas(Fig, FigPath);
         end
 
