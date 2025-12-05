@@ -3,9 +3,9 @@ close all;
 clc;
 %% User Input
 file.ext  = '.lif';
-MainFolder = {'D:\'};
-DimensionFolders = {'Rita\3D_GCN_IGR37'};
-HourFolders = {'170 nm', '200 nm', '230 nm', 'Control'};
+MainFolder = {'E:\Data Rita'};
+DimensionFolders = {'3D_A549', '3D_IGR37'};
+HourFolders = {'170nm', '200nm', '230nm'};
 ParticleFolders = {''};
 
 BigMatrix = [];

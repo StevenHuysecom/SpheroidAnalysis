@@ -4,10 +4,10 @@ clc;
 %% User Input
 file.ext  = '.lif';
 
-MainFolder = {'D:\'};
-DimensionFolders = {'Rita'};
-HourFolders = {'3D_GCN_IGR37'};
-ParticleFolders = {'170 nm', '200 nm', '230 nm', 'Control'};
+MainFolder = {'E:\'};
+DimensionFolders = {'Data Rita'};
+HourFolders = {'3D_IGR37'};
+ParticleFolders = {'170nm', '200nm', '230nm'};
 
 
 %Give info about the channels, the word needs to be lowercase with no typos
@@ -59,9 +59,8 @@ for m = 1:numel(DimensionFolders)
                                         stack.findCenter;
                                         
                                         %% Change to ellipsoid coordinates
-                                        tic 
                                         stack.CartToEllipsoid;
-                                        toc
+
                                         %% Integrate over r
                                         [IntDepth] = stack.IntegrateR;
                                         for l = 1:size(IntDepth, 1)
