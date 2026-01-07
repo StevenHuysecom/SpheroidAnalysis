@@ -113,6 +113,8 @@ classdef LysosomeSegmentation < handle
                     ChannelSeg = obj.Segmentation(Channel, ChannelName, Threshold(i));
                 elseif strcmp(ChannelName, 'Particles')
                     ChannelSeg = obj.Segmentation(Channel, ChannelName, Threshold(i));
+                elseif strcmp(ChannelName, 'Galactin')
+                    ChannelSeg = obj.Segmentation(Channel, ChannelName, Threshold(i));
                 elseif strcmp(ChannelName, 'ignore')
                     disp(append('Channel ', num2str(i), ' ignored'));
                 else
@@ -125,6 +127,7 @@ classdef LysosomeSegmentation < handle
 
         function [Segment] = Segmentation(obj, Channel, ChannelName, Threshold)
 
+           
             CurrFrameBg = Channel - imgaussfilt(Channel, 10);
             CurrFrameBg(CurrFrameBg < 0) = 0;
             CurrFrameBg = mat2gray(CurrFrameBg);
@@ -144,30 +147,47 @@ classdef LysosomeSegmentation < handle
             Segment = imfill(out, 'holes');
             Segment(Segment ~= 0) = 1;
 
-
-            LysosomeHoles = CurrFrameBg;
-            LysosomeHoles(LysosomeHoles ~= 0) = 1;
-            LysosomeHoles = bwareaopen(LysosomeHoles, 50);
-            kernel = [0 1 0; 1 0 1; 0 1 0];
-            neighborCount = conv2(double(LysosomeHoles), kernel, 'same');
-            toActivate = (LysosomeHoles == 0) & (neighborCount >= 2);
-            LysosomeHoles(toActivate == 1) = 1;
-            InnerLys = imfill(LysosomeHoles, 'holes');
-            InnerLys(LysosomeHoles == 1) = 0;
-            InnerLys = bwareaopen(InnerLys, 50);
-            InnerLys = imdilate(InnerLys, strel('disk', 3));
-
-
-            CC = bwconncomp(InnerLys, 8);  % use 8-connectivity (can change to 4 if needed)
-            toAdd = false(size(Segment));
-            SegmentDilated = Segment;
-            for k = 1:CC.NumObjects
-                pixels = CC.PixelIdxList{k};
-                if sum(SegmentDilated(pixels)) > 50
-                    toAdd(pixels) = true;
+            if ~strcmp(ChannelName, 'Galactin')
+                LysosomeHoles = CurrFrameBg;
+                LysosomeHoles(LysosomeHoles ~= 0) = 1;
+                LysosomeHoles = bwareaopen(LysosomeHoles, 50);
+                kernel = [0 1 0; 1 0 1; 0 1 0];
+                neighborCount = conv2(double(LysosomeHoles), kernel, 'same');
+                toActivate = (LysosomeHoles == 0) & (neighborCount >= 2);
+                LysosomeHoles(toActivate == 1) = 1;
+                InnerLys = imfill(LysosomeHoles, 'holes');
+                InnerLys(LysosomeHoles == 1) = 0;
+                InnerLys = bwareaopen(InnerLys, 50);
+                InnerLys = imdilate(InnerLys, strel('disk', 3));
+    
+    
+                CC = bwconncomp(InnerLys, 8);  % use 8-connectivity (can change to 4 if needed)
+                toAdd = false(size(Segment));
+                SegmentDilated = Segment;
+                for k = 1:CC.NumObjects
+                    pixels = CC.PixelIdxList{k};
+                    if sum(SegmentDilated(pixels)) > 50
+                        toAdd(pixels) = true;
+                    end
                 end
+                Segment = Segment | toAdd;
             end
-            Segment = Segment | toAdd;
+
+            if strcmp(ChannelName, 'Galactin')
+                BinIm = Channel;
+                BinIm(BinIm > 1) = 1;
+                ROIEdge = edge(BinIm);
+                ROIEdge = imdilate(ROIEdge, strel('disk', 2));
+                CC = bwconncomp(Segment, 4);   % 8-connectivity recommended
+                SegmentClean = false(size(Segment));
+                for k = 1:CC.NumObjects
+                    pixels = CC.PixelIdxList{k};
+                    if ~any(ROIEdge(pixels))
+                        SegmentClean(pixels) = true;
+                    end
+                end
+                Segment = SegmentClean;
+            end
 
             Fig = figure();
             subplot(1,3,1)
