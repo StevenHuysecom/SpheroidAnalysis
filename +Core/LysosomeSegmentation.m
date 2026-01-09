@@ -121,20 +121,48 @@ classdef LysosomeSegmentation < handle
                     error('Could not find channel name, check typo')
                 end
 
-                obj.channelsSegm.(ChannelName) = ChannelSeg;
+                if exist("ChannelSeg")
+                    obj.channelsSegm.(ChannelName) = ChannelSeg;
+                end
             end
         end
 
         function [Segment] = Segmentation(obj, Channel, ChannelName, Threshold)
 
+            BinIm = Channel;
+            BinIm(BinIm > 1) = 1;
+            ROIEdge = edge(BinIm);
+            ROIEdge = imdilate(ROIEdge, strel('disk', 2));
            
-            CurrFrameBg = Channel - imgaussfilt(Channel, 10);
+            CurrFrameBg = Channel - imgaussfilt(Channel, 3);
             CurrFrameBg(CurrFrameBg < 0) = 0;
             CurrFrameBg = mat2gray(CurrFrameBg);
             
+            Test = CurrFrameBg;
+            Test(ROIEdge == 1) = 0;
+            Test2 = islocalmax(Test);
+            Test(Test2 == 0) = 0;
+            Test = Test(:);
+            Test(Test == 0) = [];
+            Test3 = sort(Test);
+            y = Test3;
+            x = (1:numel(y))';
+            x_n = (x - min(x)) / (max(x) - min(x));
+            y_n = (y - min(y)) / (max(y) - min(y));
+            line_y = x_n;  % since normalized endpoints map to (0,0) → (1,1)
+            dist = abs(y_n - line_y);
+            [~, idx] = max(dist);
+            knee_x = x(idx);
+            knee_y = y(idx);
+
+                Threshold = knee_y;
+
             CurrFrameSmooth = medfilt2(CurrFrameBg, [3 3]);
             CurrFrameSmooth(CurrFrameBg == 0) = 0;
-            labels = bwlabeln(CurrFrameSmooth > Threshold);
+            CurrFrameSmooth = CurrFrameBg;
+            Thresholdingmask = CurrFrameSmooth > Threshold;
+            Thresholdingmask = bwareaopen(Thresholdingmask, 5);
+            labels = bwlabeln(Thresholdingmask);
             props = regionprops(labels, CurrFrameSmooth, 'PixelIdxList', 'MaxIntensity');
             out = zeros(size(CurrFrameSmooth));
             for k = 1:numel(props)
@@ -174,10 +202,7 @@ classdef LysosomeSegmentation < handle
             end
 
             if strcmp(ChannelName, 'Galactin')
-                BinIm = Channel;
-                BinIm(BinIm > 1) = 1;
-                ROIEdge = edge(BinIm);
-                ROIEdge = imdilate(ROIEdge, strel('disk', 2));
+                
                 CC = bwconncomp(Segment, 4);   % 8-connectivity recommended
                 SegmentClean = false(size(Segment));
                 for k = 1:CC.NumObjects
@@ -187,6 +212,11 @@ classdef LysosomeSegmentation < handle
                     end
                 end
                 Segment = SegmentClean;
+
+                ChannelNew = Channel;
+                ChannelNew(ROIEdge == 1) = 0;
+                obj.channels.(ChannelName) = ChannelNew;
+                Channel = obj.channels.(ChannelName);
             end
 
             Fig = figure();
@@ -285,6 +315,18 @@ classdef LysosomeSegmentation < handle
                 ResultsTables.(field) = T;
             end
             save(append(obj.raw.path, filesep, 'CorrelationResults.mat'), 'ResultsTables')
+        end
+
+        function [Fraction] = GalectinAnalysis(obj)
+            RawData = obj.channels.Galactin;
+            Mask = obj.channelsSegm.Galactin;
+
+            GalactinCounts = sum(RawData(Mask));
+            TotalCounts = sum(RawData(:));
+
+            Fraction = GalactinCounts./TotalCounts;
+
+            disp(append(num2str(Fraction.*100), '% of Galactin signal in segments'));
         end
     end
 end
