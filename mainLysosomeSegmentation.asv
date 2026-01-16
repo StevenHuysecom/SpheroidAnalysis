@@ -12,14 +12,14 @@ CellineFolders = {'mSi_PB', 'mSi_PB_PEI'};
 
 %Give info about the channels, the word needs to be lowercase with no typos
 %care that the
-chan.ch01 = 'Particles';
+chan.ch01 = 'Lamp1';
 chan.ch02 = 'Lysotracker';
-chan.ch03 = 'Lamp1';
-chan.ch04 = 'Galactin';
+chan.ch03 = 'Galactin';
+chan.ch04 = 'ignore';
 
 %some parameters
 slice = 1; %which slice of the 3D stack to select the ROI on
-Threshold = [0.10, 0.10, 0.20, 0.15]; %[0-1], keep it under 0.15, intensity threshold for lysosomes (high = throw away dim/out-of-focus lysosomes)
+Threshold = [0.10, 0.10, 0.10]; %[0-1], keep it under 0.15, intensity threshold for lysosomes (high = throw away dim/out-of-focus lysosomes)
 
 %% Loading data
 

@@ -257,7 +257,7 @@ classdef LysosomeSegmentation < handle
             channels_mask = obj.channelsSegm;
             
             channelnames = fieldnames(obj.channels); 
-            pairs = {{channelnames{1},channelnames{2}}, {channelnames{1},channelnames{3}}, {channelnames{2},channelnames{3}}};
+            pairs = {{channelnames{1},channelnames{4}}, {channelnames{2},channelnames{4}}, {channelnames{3},channelnames{4}}};
 
             Results = [];
             for k = 1:length(pairs)
