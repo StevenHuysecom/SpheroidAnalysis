@@ -1,0 +1,110 @@
+clear;
+close all;
+clc;
+%% User Input
+file.ext  = '.lif';
+file.runSegmentation = 'run'; %load or run
+file.drawROI = 'off'; %'off', or channel name
+
+MainFolder = {'D:\mini'};
+HourFolders = {'FIREphly sensor'};
+CellineFolders = {'Chloroquine', 'PEI', 'PEIRichard'};
+
+%Give info about the channels, the word needs to be lowercase with no typos
+%care that the
+chan.ch01 = 'mTFP1';
+chan.ch02 = 'mCherry';
+chan.ch03 = 'Particles';
+chan.ch04 = 'Lysotracker';
+
+%some parameters
+slice = 1; %which slice of the 3D stack to select the ROI on
+Threshold = [0.10, 0.25, 0.25, 0.10]; %[0-1], keep it under 0.15, intensity threshold for lysosomes (high = throw away dim/out-of-focus lysosomes)
+
+%% Loading data
+
+for a = 1:numel(HourFolders)
+    HourFolder = HourFolders{a};
+    for r = 1:numel(CellineFolders)
+        CellineFolder = CellineFolders{r};
+        Path = append(MainFolder, filesep, HourFolder, filesep, CellineFolder);
+        file.path = Path{1,1};
+
+        Load.Movie.lif.LoadImages(file, chan);
+        Load.Movie.DrawApplyROI(file, chan, slice);
+    end
+end
+
+
+for a = 1:numel(HourFolders)
+    HourFolder = HourFolders{a};
+    for r = 1:numel(CellineFolders)
+        CellineFolder = CellineFolders{r};
+        Path = append(MainFolder, filesep, HourFolder, filesep, CellineFolder);
+        file.path = Path{1,1};
+        CurrentFolder = dir(file.path);
+        CurrentFolder(1:2) = [];
+        isDirColumn = [CurrentFolder.isdir]';
+        for i = 1:size(CurrentFolder,1)
+            if isDirColumn(i,1) == 1
+                SubFolder = dir(append(CurrentFolder(i).folder, filesep, CurrentFolder(i).name));
+                SubFolder(1:2) = [];
+                isSubDirColumn = [SubFolder.isdir]';
+
+
+                Results  = [];
+                Filename = {};
+                k = 0;   % index for valid entries
+                
+                for j = 1:size(SubFolder,1)
+                
+                    if isSubDirColumn(j,1) == 1
+                        k = k + 1;
+                
+                        file.path = append(SubFolder(j).folder, filesep, SubFolder(j).name);
+                
+                        stack = Core.LysosomeSegmentation(file);
+                        stack.loadDataBioform(chan);
+                        stack.showChannel;
+                        stack.SegmentChannels(Threshold);
+                
+                        Res = stack.CalculatepH;
+                
+                        Results(k,:)  = Res;
+                        Filename{k,1} = file.path;
+                
+                        close all
+                    end
+                end
+
+
+                ResultTable = table(string(Filename), Results(:,1), Results(:,2), Results(:,3), Results(:,4), Results(:,5), Results(:,6), 'VariableNames', { ...
+                    'Filename', 'SignalInLysotracker', 'SignalOutsideLysotracker', 'NPdensityInside', 'NPdensityOutside', 'NPintensityIn', 'NPintensityOut'});
+
+                writetable(ResultTable, append(CurrentFolder(i).folder, filesep, CurrentFolder(i).name, filesep, 'ResultspHSensor.xlsx'));
+
+                Fig = figure();
+                scatter(ResultTable.NPdensityInside, ResultTable.SignalInLysotracker, 'filled');
+                hold on
+                scatter(ResultTable.NPdensityOutside, ResultTable.SignalOutsideLysotracker, 'filled');
+                xlabel('NP density (counts/px)')
+                ylabel('Ratio mTFP1./mCherry')
+                title('pH vs NP density')
+                legend({'Inside lysosomes', 'Outside lysosomes'});
+                saveas(Fig, append(CurrentFolder(i).folder, filesep, CurrentFolder(i).name, filesep, 'pHvsNPdensity.png'))
+                saveas(Fig, append(CurrentFolder(i).folder, filesep, CurrentFolder(i).name, filesep, 'pHvsNPdensity.svg'))
+
+                Fig2 = figure();
+                scatter(ResultTable.NPintensityIn, ResultTable.SignalInLysotracker, 'filled');
+                hold on
+                scatter(ResultTable.NPintensityOut, ResultTable.SignalOutsideLysotracker, 'filled');
+                xlabel('NP density (counts/px)')
+                ylabel('Ratio mTFP1./mCherry')
+                title('pH vs NP density')
+                legend({'Inside lysosomes', 'Outside lysosomes'});
+                saveas(Fig, append(CurrentFolder(i).folder, filesep, CurrentFolder(i).name, filesep, 'pHvsNPintensity.png'))
+                saveas(Fig, append(CurrentFolder(i).folder, filesep, CurrentFolder(i).name, filesep, 'pHvsNPintensity.svg'))
+            end
+        end
+    end
+end

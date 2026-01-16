@@ -164,11 +164,11 @@ classdef LysosomeSegmentation < handle
             knee_x = x(idx);
             knee_y = y(idx);
 
-            if strcmp(ChannelName, 'Lysotracker')
-                Threshold = knee_y .* 1.5;
-            else
+            % if strcmp(ChannelName, 'mCherry')
+            %     Threshold = knee_y ./ 2;
+            % else
                 Threshold = knee_y;
-            end
+            % end
 
             CurrFrameSmooth = medfilt2(CurrFrameBg, [3 3]);
             CurrFrameSmooth(CurrFrameBg == 0) = 0;
@@ -350,21 +350,26 @@ classdef LysosomeSegmentation < handle
             RatioMapRaw(edge(obj.channelsSegm.Lysotracker) == 1) = max(RatioMapRaw, [], 'all');
             RatioMap(obj.channelsSegm.mCherry == 0) = 0;
 
-            Fig = figure;
-            bg = obj.channels.mCherry;
-            bg = mat2gray(bg);                 % normalize to [0 1]
-            bgRGB = repmat(bg, [1 1 3]);       % grayscale → RGB
-            image(bgRGB);
-            axis image off
-            hold on
+            figure;
+            imagesc(obj.channels.mCherry);
+            colormap(gray);
+            axis image off;
+            hold on;
             h = imagesc(RatioMap);
-            colormap(flipud(jet));
-            caxis([0 2])
-            alphaData = RatioMap ~= 0;
+            colormap(gca, jet);
+            caxis([0 5]);
+            alphaData = double(RatioMap ~= 0);
             set(h, 'AlphaData', alphaData);
             cb = colorbar;
             cb.Label.String = 'Ratio mTFP1/mCherry';
-            cb.Limits = [0 2];
+            cb.Limits = [0 5];
+
+            Fig = figure();
+            imagesc(RatioMapRaw)
+            colormap('jet')
+            clim([0 5])
+            c = colorbar;
+            c.Label.String = "Ratio mTFP1/mCherry";
             saveas(Fig, append(obj.raw.path, filesep, 'RatioMap.png'))
             saveas(Fig, append(obj.raw.path, filesep, 'RatioMap.svg'))
  
