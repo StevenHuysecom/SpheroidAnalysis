@@ -143,6 +143,7 @@ classdef LysosomeSegmentation < handle
             else
                 CurrFrameBg = Channel - imgaussfilt(Channel, 10);
             end
+            CurrFrameBg(Channel >= 255) = max(CurrFrameBg, [],'all');
 
             CurrFrameBg(CurrFrameBg < 0) = 0;
             CurrFrameBg = mat2gray(CurrFrameBg);
@@ -164,9 +165,7 @@ classdef LysosomeSegmentation < handle
             knee_x = x(idx);
             knee_y = y(idx);
 
-            if strcmp(ChannelName, 'Lysotracker')
-                Threshold = knee_y .* 1.5;
-            else
+            if strcmp(ChannelName, 'Galactin')
                 Threshold = knee_y;
             end
 
@@ -189,10 +188,39 @@ classdef LysosomeSegmentation < handle
             Segment(Segment ~= 0) = 1;
 
             if strcmp(ChannelName, 'Lamp1')
-                LysosomeHoles = CurrFrameBg;
-                LysosomeHoles(LysosomeHoles ~= 0) = 1;
+                LysosomeHoles = imgaussfilt(imadjust(CurrFrameBg), 2);
+                Test = LysosomeHoles;
+                Test(ROIEdge == 1) = 0;
+                Test2 = islocalmax(Test);
+                Test(Test2 == 0) = 0;
+                Test = Test(:);
+                Test(Test == 0) = [];
+                Test3 = sort(Test);
+                y = Test3;
+                x = (1:numel(y))';
+                x_n = (x - min(x)) / (max(x) - min(x));
+                y_n = (y - min(y)) / (max(y) - min(y));
+                line_y = x_n;  % since normalized endpoints map to (0,0) → (1,1)
+                dist = abs(y_n - line_y);
+                [~, idx] = max(dist);
+                knee_x = x(idx);
+                knee_y = y(idx);
+                LysosomeHoles(LysosomeHoles >= knee_y./2) = 1;
+                LysosomeHoles(LysosomeHoles < knee_y./2) = 0;
                 LysosomeHoles = bwareaopen(LysosomeHoles, 50);
-                kernel = [0 1 0; 1 0 1; 0 1 0];
+
+                D = bwdist(~LysosomeHoles);
+                W = bwlabeln(watershed(D));
+                stats = regionprops(W, "Circularity", "PixelIdxList");
+                Init = zeros(size(W));
+                for i = 1:size(stats, 1)
+                    if stats(i).Circularity > 0.85
+                        Init(stats(i).PixelIdxList) = stats(i).Circularity;
+                    end
+                end
+                Init = bwareaopen(Init, 500);
+
+                kernel = [1 1 1; 1 0 1; 1 1 1];
                 neighborCount = conv2(double(LysosomeHoles), kernel, 'same');
                 toActivate = (LysosomeHoles == 0) & (neighborCount >= 2);
                 LysosomeHoles(toActivate == 1) = 1;
@@ -200,7 +228,16 @@ classdef LysosomeSegmentation < handle
                 InnerLys(LysosomeHoles == 1) = 0;
                 InnerLys = bwareaopen(InnerLys, 50);
                 InnerLys = imdilate(InnerLys, strel('disk', 3));
-    
+                stats = regionprops(InnerLys, "Circularity", "PixelIdxList");
+                Init2 = zeros(size(W));
+                for i = 1:size(stats, 1)
+                    if stats(i).Circularity > 0.85
+                        Init2(stats(i).PixelIdxList) = stats(i).Circularity;
+                    end
+                end
+
+                InnerLys2 = Init + Init2;
+                InnerLys2(InnerLys2 > 0) = 1;
     
                 CC = bwconncomp(InnerLys, 8);  % use 8-connectivity (can change to 4 if needed)
                 toAdd = false(size(Segment));
@@ -211,7 +248,46 @@ classdef LysosomeSegmentation < handle
                         toAdd(pixels) = true;
                     end
                 end
+
+                CC = bwconncomp(InnerLys2, 8);  % use 8-connectivity (can change to 4 if needed)
+                SegmentDilated = Segment;
+                for k = 1:CC.NumObjects
+                    pixels = CC.PixelIdxList{k};
+                    if sum(SegmentDilated(pixels)) > 2
+                        toAdd(pixels) = true;
+                    end
+                end
+
                 Segment = Segment | toAdd;
+
+                kernel = [1 0 1; 1 0 1; 1 0 1];
+                neighborCount = conv2(Segment, kernel, 'same');
+                toAdd1 = (Segment == 0) & (neighborCount >= 2);
+                kernel = [1 1 1; 0 0 0; 1 1 1];
+                neighborCount2 = conv2(Segment, kernel, 'same');
+                toAdd2 = (Segment == 0) & (neighborCount2 >= 2);
+
+                Test = Segment + toAdd1 + toAdd2;
+                Test2 = imfill(Test, 'holes');
+                Test2 = Test2 - Test;
+                Test2 = imfill(Test2, 'holes');
+                stats = regionprops(bwlabeln(Test2), "Circularity", "PixelIdxList");
+                FinalAdd = zeros(size(Test2));
+                                for i = 1:size(stats, 1)
+                                    if stats(i).Circularity > 0.85
+                                        FinalAdd(stats(i).PixelIdxList) = stats(i).Circularity;
+                                    end
+                                end
+                FinalAdd = bwareaopen(FinalAdd, 25);
+
+                Segment = Segment + FinalAdd;
+                Segment(Segment > 1 ) = 1;
+
+                kernel = [1 1 1; 1 0 1; 1 1 1];
+                neighborCount = conv2(Segment, kernel, 'same');
+                toAdd3 = (Segment == 0) & (neighborCount >= 5);
+                Segment = Segment + toAdd3;
+                Segment(Segment > 1 ) = 1;
             end
 
             if strcmp(ChannelName, 'Galactin')

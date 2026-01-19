@@ -8,7 +8,7 @@ file.drawROI = 'off'; %'off', or channel name
 
 MainFolder = {'D:\mini'};
 HourFolders = {'Lamp1Gal3_monoclonal'};
-CellineFolders = {'mSi_PB', 'mSi_PB_PEI'};
+CellineFolders = {'mSi_PB_PEI'}; %, 'mSi_PB_PEI'
 
 %Give info about the channels, the word needs to be lowercase with no typos
 %care that the
@@ -19,7 +19,7 @@ chan.ch04 = 'Galactin';
 
 %some parameters
 slice = 1; %which slice of the 3D stack to select the ROI on
-Threshold = [0.10, 0.10, 0.20, 0.15]; %[0-1], keep it under 0.15, intensity threshold for lysosomes (high = throw away dim/out-of-focus lysosomes)
+Threshold = [0.075, 0.10, 0.05, 0.15]; %[0-1], keep it under 0.15, intensity threshold for lysosomes (high = throw away dim/out-of-focus lysosomes)
 
 %% Loading data
 
