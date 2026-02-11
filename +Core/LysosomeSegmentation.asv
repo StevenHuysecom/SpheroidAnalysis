@@ -108,15 +108,15 @@ classdef LysosomeSegmentation < handle
                 Channel = obj.channels.(ChannelName);
 
                 if strcmp(ChannelName, 'Lamp1')
-                    ChannelSeg = obj.Segmentation(Channel, ChannelName, Threshold(i));
+                    ChannelSeg = obj.Segmentation(Channel, ChannelName, Threshold(i),1);
                 elseif strcmp(ChannelName, 'Lysotracker')
-                    ChannelSeg = obj.Segmentation(Channel, ChannelName, Threshold(i));
+                    ChannelSeg = obj.Segmentation(Channel, ChannelName, Threshold(i),1);
                 elseif strcmp(ChannelName, 'Particles')
-                    ChannelSeg = obj.Segmentation(Channel, ChannelName, Threshold(i));
+                    ChannelSeg = obj.Segmentation(Channel, ChannelName, Threshold(i),1);
                 elseif strcmp(ChannelName, 'Galactin')
-                    ChannelSeg = obj.Segmentation(Channel, ChannelName, Threshold(i));
+                    ChannelSeg = obj.Segmentation(Channel, ChannelName, Threshold(i),1);
                 elseif strcmp(ChannelName, 'mCherry')
-                    ChannelSeg = obj.Segmentation(Channel, ChannelName, Threshold(i));
+                    ChannelSeg = obj.Segmentation(Channel, ChannelName, Threshold(i),1);
                 elseif strcmp(ChannelName, 'ignore')
                     disp(append('Channel ', num2str(i), ' ignored'));
                 elseif strcmp(ChannelName, 'mTFP1')
@@ -131,18 +131,19 @@ classdef LysosomeSegmentation < handle
             end
         end
 
-        function [Segment] = Segmentation(obj, Channel, ChannelName, Threshold)
+        function [Segment] = Segmentation(obj, Channel, ChannelName, Threshold, ToPlot)
 
             BinIm = Channel;
             BinIm(BinIm > 1) = 1;
             ROIEdge = edge(BinIm);
             ROIEdge = imdilate(ROIEdge, strel('disk', 2));
           
-            if ~strcmp(ChannelName, 'mCherry')
-                CurrFrameBg = Channel - imgaussfilt(Channel, 3);
-            else
-                CurrFrameBg = Channel - imgaussfilt(Channel, 10);
-            end
+            % if ~strcmp(ChannelName, 'mCherry')
+            %     CurrFrameBg = Channel - imgaussfilt(Channel, 3);
+            % else
+            %     CurrFrameBg = Channel - imgaussfilt(Channel, 15);
+            % end
+            CurrFrameBg = Channel - imgaussfilt(Channel, 40);
             CurrFrameBg(Channel >= 255) = max(CurrFrameBg, [],'all');
 
             CurrFrameBg(CurrFrameBg < 0) = 0;
@@ -282,6 +283,12 @@ classdef LysosomeSegmentation < handle
 
                 Segment = Segment + FinalAdd;
                 Segment(Segment > 1 ) = 1;
+
+                kernel = [1 1 1; 1 0 1; 1 1 1];
+                neighborCount = conv2(Segment, kernel, 'same');
+                toAdd3 = (Segment == 0) & (neighborCount >= 5);
+                Segment = Segment + toAdd3;
+                Segment(Segment > 1 ) = 1;
             end
 
             if strcmp(ChannelName, 'Galactin')
@@ -302,24 +309,26 @@ classdef LysosomeSegmentation < handle
                 Channel = obj.channels.(ChannelName);
             end
 
-            Fig = figure();
-            subplot(1,3,1)
-            imagesc(Channel)
-            title('raw data')
-            axis image
-            subplot(1,3,2)
-            imagesc(Segment)
-            title('mask')
-            axis image
-            subplot(1,3,3)
-            imshowpair(Channel, Segment)
-            title('overlay')
-            sgtitle(ChannelName)
+            if ToPlot == 1
+                Fig = figure();
+                subplot(1,3,1)
+                imagesc(Channel)
+                title('raw data')
+                axis image
+                subplot(1,3,2)
+                imagesc(Segment)
+                title('mask')
+                axis image
+                subplot(1,3,3)
+                imshowpair(Channel, Segment)
+                title('overlay')
+                sgtitle(ChannelName)
 
-            FigPath1 = append(obj.raw.path, filesep, 'mask_', ChannelName, 'Threshold_all0.30_.png');
-            FigPath2 = append(obj.raw.path, filesep, 'mask_', ChannelName, 'Threshold_all0.30_.svg');
-            saveas(Fig, FigPath1);
-            saveas(Fig, FigPath2);
+                FigPath1 = append(obj.raw.path, filesep, 'mask_', ChannelName, 'Threshold', num2str(Threshold), '.png');
+                FigPath2 = append(obj.raw.path, filesep, 'mask_', ChannelName, 'Threshold', num2str(Threshold), '.svg');
+                saveas(Fig, FigPath1);
+                saveas(Fig, FigPath2);
+            end
         end
 
         function [Results] = CrossCorrelation(obj)
@@ -411,32 +420,88 @@ classdef LysosomeSegmentation < handle
 
             Fraction = GalactinCounts./TotalCounts;
 
+            Galactin = medfilt2(obj.channels.Galactin - imopen(obj.channels.Galactin, strel('disk', 15')), [3 3]);
+            Lysotracker = medfilt2(obj.channels.Lysotracker - imopen(obj.channels.Lysotracker, strel('disk', 15')), [3 3]);
+            LysotrackerMask = obj.channelsSegm.Lysotracker;
+            GalactinMask = obj.channelsSegm.Galactin;
+            Galactin = Galactin ./ max(Galactin, [], 'all');
+            Lysotracker  = Lysotracker  ./ max(Lysotracker , [], 'all');
+            Lysotracker(GalactinMask == 0) = 0;
+            Galactin(GalactinMask == 0) = 0;
+            Correlation = [Lysotracker(:), Galactin(:)];
+            Correlation(Correlation(:,1) == 0, :) = [];
+            CorrelationSort = sortrows(Correlation);
+            x = CorrelationSort(:,1);
+            y = CorrelationSort(:,2);
+            edges = 0:0.005:1;              % bin edges
+            binIdx = discretize(x, edges); % which bin each x belongs to
+            yMean = accumarray(binIdx, y, [numel(edges)-1, 1], @mean, NaN);
+            xBinCenters = edges(1:end-1)'; % or edges(1:end-1) + 0.025
+            B = [xBinCenters, yMean];
+
             disp(append(num2str(Fraction.*100), '% of Galactin signal in segments'));
         end
 
-        function [Results] = CalculatepH(obj)
-            RatioMapRaw = obj.channels.mTFP1./obj.channels.mCherry;
+        function [Results, Trends] = CalculatepH(obj)
+            mTFP1 = medfilt2(obj.channels.mTFP1 - imopen(obj.channels.mTFP1, strel('disk', 15')), [3 3]);
+            mCherry = medfilt2(obj.channels.mCherry - imopen(obj.channels.mCherry, strel('disk', 15')), [3 3]);
+            mCherry(mCherry == 0) = NaN;
+            RatioMapRaw = mTFP1./mCherry;
             RatioMap = RatioMapRaw;
+
+            Fig = figure;
+            set(Fig, 'Color', 'w');        % Figure background stays white
+            h = imagesc(RatioMapRaw);
+            Test = jet;
+            Test = Test(50:end-10, :);
+            colormap(flipud(Test));
+            colorbar;
+            caxis([0 2])
+            ax = gca;
+            set(ax, 'Color', 'k');         % Axes background = black
+            axis image
+            alphaData = medfilt2( ...
+                obj.channels.mCherry ./ quantile(obj.channels.mCherry, 0.99, 'all'), ...
+                [3 3]);
+            set(h, 'AlphaData', alphaData);
+            exportgraphics(Fig, append(obj.raw.path, filesep, 'RatioMap.png'), 'Resolution', 300);
+            saveas(Fig, append(obj.raw.path, filesep, 'RatioMap.png'))
+            saveas(Fig, append(obj.raw.path, filesep, 'RatioMap.svg'))
+
+            NormalizedLysotracker = obj.channels.Lysotracker ./ max(obj.channels.Lysotracker, [], 'all');
+            NormalizedLysotracker(obj.channelsSegm.mCherry == 0) = 0;
+            RatioMapFiltered = RatioMapRaw;
+            RatioMapFiltered(obj.channelsSegm.mCherry == 0) = 0;
+            Correlation = [NormalizedLysotracker(:), RatioMapFiltered(:)];
+            Correlation(Correlation(:,1) == 0, :) = [];
+            CorrelationSort = sortrows(Correlation);
+
+            x = CorrelationSort(:,1);
+            y = CorrelationSort(:,2);
+            edges = 0:0.005:1;              % bin edges
+            binIdx = discretize(x, edges); % which bin each x belongs to
+            yMean = accumarray(binIdx, y, [numel(edges)-1, 1], @mean, NaN);
+            xBinCenters = edges(1:end-1)'; % or edges(1:end-1) + 0.025
+            B = [xBinCenters, yMean];
+
             RatioMapRaw(edge(obj.channelsSegm.Lysotracker) == 1) = max(RatioMapRaw, [], 'all');
             RatioMap(obj.channelsSegm.mCherry == 0) = 0;
 
-            Fig = figure;
-            bg = obj.channels.mCherry;
-            bg = mat2gray(bg);                 % normalize to [0 1]
-            bgRGB = repmat(bg, [1 1 3]);       % grayscale → RGB
-            image(bgRGB);
-            axis image off
-            hold on
-            h = imagesc(RatioMap);
-            colormap(flipud(jet));
-            caxis([0 2])
-            alphaData = RatioMap ~= 0;
-            set(h, 'AlphaData', alphaData);
-            cb = colorbar;
-            cb.Label.String = 'Ratio mTFP1/mCherry';
-            cb.Limits = [0 2];
-            saveas(Fig, append(obj.raw.path, filesep, 'RatioMap.png'))
-            saveas(Fig, append(obj.raw.path, filesep, 'RatioMap.svg'))
+            % Fig = figure;
+            % bg = obj.channels.mCherry;
+            % bg = mat2gray(bg);                 % normalize to [0 1]
+            % bgRGB = repmat(bg, [1 1 3]);       % grayscale → RGB
+            % image(bgRGB);
+            % axis image off
+            % hold on
+            % h = imagesc(RatioMap);
+            % colormap(flipud(jet));
+            % caxis([0 2])
+            % alphaData = RatioMap ~= 0;
+            % set(h, 'AlphaData', alphaData);
+            % cb = colorbar;
+            % cb.Label.String = 'Ratio mTFP1/mCherry';
+            % cb.Limits = [0 2];
  
             RatioMapInLysotracker = RatioMap.*obj.channelsSegm.Lysotracker;
             RatioMapInLysotracker(RatioMapInLysotracker == 0) = nan;
@@ -446,24 +511,113 @@ classdef LysosomeSegmentation < handle
 
             SignalInLysotracker = mean(RatioMapInLysotracker, 'all', 'omitnan');
             SignalOutsideLysotracker = mean(RatioMapOutsideLysotracker, 'all', 'omitnan');
+            RatioList = RatioMap(:);
+            RatioList(or(RatioList == 0, isnan(RatioList))) = [];
+            SignalTotal = mean(RatioList);
 
             ParticleDensityInSide = obj.channels.Particles;
             ParticleDensityInSide(isnan(RatioMapInLysotracker)) = nan;
             ListInside = ParticleDensityInSide(:);
             ListInside(isnan(ListInside)) = [];
             PxNum = numel(ListInside);
-            SignalIn = sum(ParticleDensityInSide, 'all', 'omitnan');
-            NPDensityIn = SignalIn./PxNum;
+            SignalInCounts = sum(ParticleDensityInSide, 'all', 'omitnan');
+            NPDensityIn = SignalInCounts./PxNum;
 
             ParticleDensityOutSide = obj.channels.Particles;
             ParticleDensityOutSide(isnan(RatioMapOutsideLysotracker)) = nan;
             ListOutside = ParticleDensityOutSide(:);
             ListOutside(isnan(ListOutside)) = [];
             PxNum = numel(ListOutside);
-            SignalOut = sum(ParticleDensityOutSide, 'all', 'omitnan');
-            NPDensityOut = SignalOut./PxNum;
+            SignalOutCounts = sum(ParticleDensityOutSide, 'all', 'omitnan');
+            NPDensityOut = SignalOutCounts./PxNum;
 
-            Results = [SignalInLysotracker, SignalOutsideLysotracker, NPDensityIn, NPDensityOut, SignalIn, SignalOut];
+            SignalIn = SignalInCounts./(SignalInCounts+SignalOutCounts);
+            SignalOut = SignalOutCounts./(SignalInCounts+SignalOutCounts);
+
+            % A_mask = logical(obj.channelsSegm.mCherry);
+            A_mask = Segmentation(obj, obj.channels.mCherry, 'Lamp1', 0.05,0);
+            Fig = figure();
+            subplot(1,3,1)
+            imagesc(obj.channels.mCherry)
+            title('raw data')
+            axis image
+            subplot(1,3,2)
+            imagesc(A_mask)
+            title('mask')
+            axis image
+            subplot(1,3,3)
+            imshowpair(obj.channels.mCherry, A_mask)
+            title('overlay')
+            sgtitle('mCherry after filling')
+
+            FigPath1 = append(obj.raw.path, filesep, 'mCherryAfterFill.png');
+            FigPath2 = append(obj.raw.path, filesep, 'mCherryAfterFill.svg');
+            saveas(Fig, FigPath1);
+            saveas(Fig, FigPath2);
+            B_mask = logical(obj.channelsSegm.Lysotracker);
+            overlap = A_mask & B_mask;
+            OverlapCoeff = 100 * sum(overlap(:)) / sum(A_mask(:));
+
+            RatioMap(RatioMap == 0) = nan;
+            RatioMapAcidic = RatioMap;
+            RatioMapAcidic(RatioMapAcidic >= 0.85) = 0;
+            RatioMapAcidic(isnan(RatioMapAcidic)) = 0;
+            RatioMapAcidic(RatioMapAcidic ~= 0) = 1;
+            RatioMapAcidic = imfill(RatioMapAcidic, 'holes');
+
+            RatioMapBasic = RatioMap;
+            RatioMapBasic(RatioMapBasic < 0.85) = 0;
+            RatioMapBasic(isnan(RatioMapBasic)) = 0;
+            RatioMapBasic(RatioMapBasic ~= 0) = 1;
+            RatioMapBasic = imfill(RatioMapBasic, 'holes');
+
+            A_mask = logical(obj.channelsSegm.mCherry);
+            B_mask = logical(obj.channelsSegm.Lysotracker);
+            OverlapmCherryLysotracker = A_mask & B_mask;
+            FractionLysotrackerInAcidic = sum(RatioMapAcidic & OverlapmCherryLysotracker, 'all')./sum(OverlapmCherryLysotracker, 'all');
+            FractionLysotrackerInBasic = sum(RatioMapBasic & OverlapmCherryLysotracker, 'all')./sum(OverlapmCherryLysotracker, 'all');
+
+            ParticlesAcidic = obj.channels.Particles;
+            ParticlesAcidic(RatioMapAcidic ~= 1) = nan;
+            ParticlesBasic = obj.channels.Particles;
+            ParticlesBasic(RatioMapBasic ~= 1) = nan;
+
+            DensityAcidic = sum(ParticlesAcidic(:), 'omitnan')./numel(~isnan(ParticlesAcidic));
+            DensityBasic = sum(ParticlesBasic(:),  'omitnan')./numel(~isnan(ParticlesBasic));
+
+            ParticlesAcidic(isnan(ParticlesAcidic)) = 0;
+            ParticlesAcidic(ParticlesAcidic ~= 0) = 1;
+            A_mask = logical(ParticlesAcidic);
+            B_mask = logical(obj.channelsSegm.Lysotracker);
+            overlap = A_mask & B_mask;
+            OverlapCoeffAcidic = 100 * sum(overlap(:)) / sum(A_mask(:));
+            AreaAcidic = sum(A_mask, "all");
+
+            ParticlesBasic(isnan(ParticlesBasic)) = 0;
+            ParticlesBasic(ParticlesBasic ~= 0) = 1;
+            A_mask = logical(ParticlesBasic);
+            B_mask = logical(obj.channelsSegm.Lysotracker);
+            overlap = A_mask & B_mask;
+            OverlapCoeffBasic = 100 * sum(overlap(:)) / sum(A_mask(:));
+            AreaBasic = sum(A_mask, "all");
+
+            ParticlesBasicCounts = obj.channels.Particles;
+            ParticlesBasicCounts(ParticlesBasic == 0) = 0;
+            ParticlesBasic = sum(ParticlesBasicCounts, 'all');
+
+            ParticlesAcidicCounts = obj.channels.Particles;
+            ParticlesAcidicCounts(ParticlesAcidic == 0) = 0;
+            ParticlesAcidic = sum(ParticlesAcidicCounts, 'all');
+
+            % TotalParticles = sum(obj.channels.Particles, 'all');
+            TotalParticles = ParticlesBasic + ParticlesAcidic;
+            ParticlesBasicFraction = ParticlesBasic./TotalParticles;
+            ParticlesAcidicFraction = ParticlesAcidic./TotalParticles;
+
+            Results = [SignalTotal, SignalInLysotracker, SignalOutsideLysotracker, NPDensityIn, NPDensityOut, SignalIn,...
+                SignalOut, OverlapCoeff, DensityAcidic, DensityBasic, OverlapCoeffAcidic, OverlapCoeffBasic, AreaAcidic, AreaBasic,...
+                ParticlesAcidic, ParticlesBasic, ParticlesAcidicFraction, ParticlesBasicFraction, FractionLysotrackerInAcidic, FractionLysotrackerInBasic];
+            Trends = B;
         end
     end
 end

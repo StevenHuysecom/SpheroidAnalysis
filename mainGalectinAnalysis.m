@@ -6,14 +6,14 @@ file.ext  = '.lif';
 file.runSegmentation = 'run'; %load or run
 file.drawROI = 'off'; %'off', or channel name
 
-MainFolder = {'C:\Users\steve\OneDrive\Documenten'};
-HourFolders = {'data multicolor'};
-CellineFolders = {'data Indra'};
+MainFolder = {'D:\mini\A549 Lamp1 Gal3'};
+HourFolders = {'LysoTracker'};
+CellineFolders = {'mSiPEI'};
 
 %Give info about the channels, the word needs to be lowercase with no typos
 %care that the
-chan.ch01 = 'ignore';
-chan.ch02 = 'ignore';
+chan.ch01 = 'Lamp1';
+chan.ch02 = 'Lysotracker';
 chan.ch03 = 'Galactin';
 chan.ch04 = 'ignore';
 
