@@ -411,7 +411,7 @@ classdef LysosomeSegmentation < handle
             save(append(obj.raw.path, filesep, 'CorrelationResults.mat'), 'ResultsTables')
         end
 
-        function [Fraction] = GalectinAnalysis(obj)
+        function [Fraction, Intensities, B] = GalectinAnalysis(obj)
             RawData = obj.channels.Galactin;
             Mask = obj.channelsSegm.Galactin;
 
@@ -420,17 +420,33 @@ classdef LysosomeSegmentation < handle
 
             Fraction = GalactinCounts./TotalCounts;
 
+            LysotrackerMask = obj.channelsSegm.Lysotracker;
+            GalactinMask = obj.channelsSegm.Galactin;
+            ConvMask = and(LysotrackerMask == 1, GalactinMask == 1);
+            Lysotracker = obj.channels.Lysotracker;
+            Lysotracker(LysotrackerMask == 0) = NaN;
+            MeanLysotrackerAll = mean(Lysotracker, 'all','omitnan');
+            LysotrackerConv = Lysotracker;
+            LysotrackerConv(ConvMask == 0) = NaN;
+            MeanLysotrackerConv = mean(LysotrackerConv, 'all','omitnan');
+            LysotrackerOut = Lysotracker;
+            LysotrackerOut(ConvMask == 1) = NaN;
+            MeanLysotrackerOut = mean(LysotrackerOut, 'all','omitnan');
+
+            Intensities = [MeanLysotrackerAll, MeanLysotrackerConv, MeanLysotrackerOut];
+
             Galactin = medfilt2(obj.channels.Galactin - imopen(obj.channels.Galactin, strel('disk', 15')), [3 3]);
             Lysotracker = medfilt2(obj.channels.Lysotracker - imopen(obj.channels.Lysotracker, strel('disk', 15')), [3 3]);
             LysotrackerMask = obj.channelsSegm.Lysotracker;
             GalactinMask = obj.channelsSegm.Galactin;
+          
             Galactin = Galactin ./ max(Galactin, [], 'all');
-            Lysotracker  = Lysotracker  ./ max(Lysotracker , [], 'all');
+            Lysotracker  = Lysotracker ./ max(Lysotracker , [], 'all');
             Lysotracker(GalactinMask == 0) = 0;
             Galactin(GalactinMask == 0) = 0;
-            Correlation = [Lysotracker(:), Galactin(:)];
+            Correlation = [Galactin(:), Lysotracker(:)];
             Correlation(Correlation(:,1) == 0, :) = [];
-            CorrelationSort = sortrows(Correlation);
+            CorrelationSort = sortrows(Correlation, 1);
             x = CorrelationSort(:,1);
             y = CorrelationSort(:,2);
             edges = 0:0.005:1;              % bin edges
@@ -442,7 +458,7 @@ classdef LysosomeSegmentation < handle
             disp(append(num2str(Fraction.*100), '% of Galactin signal in segments'));
         end
 
-        function [Results, Trends] = CalculatepH(obj)
+        function [Results, Trends, TrendsParticles, PxCounts] = CalculatepH(obj)
             mTFP1 = medfilt2(obj.channels.mTFP1 - imopen(obj.channels.mTFP1, strel('disk', 15')), [3 3]);
             mCherry = medfilt2(obj.channels.mCherry - imopen(obj.channels.mCherry, strel('disk', 15')), [3 3]);
             mCherry(mCherry == 0) = NaN;
@@ -456,7 +472,7 @@ classdef LysosomeSegmentation < handle
             Test = Test(50:end-10, :);
             colormap(flipud(Test));
             colorbar;
-            caxis([0 2])
+            caxis([0 1.5])
             ax = gca;
             set(ax, 'Color', 'k');         % Axes background = black
             axis image
@@ -467,24 +483,58 @@ classdef LysosomeSegmentation < handle
             exportgraphics(Fig, append(obj.raw.path, filesep, 'RatioMap.png'), 'Resolution', 300);
             exportgraphics(Fig, append(obj.raw.path, filesep, 'RatioMap.pdf'), 'ContentType', 'vector');
             
+            ToRemove = obj.channels.mCherry == 255;
             NormalizedLysotracker = obj.channels.Lysotracker ./ max(obj.channels.Lysotracker, [], 'all');
-            NormalizedLysotracker(obj.channelsSegm.mCherry == 0) = 0;
             RatioMapFiltered = RatioMapRaw;
             RatioMapFiltered(obj.channelsSegm.mCherry == 0) = 0;
-            Correlation = [NormalizedLysotracker(:), RatioMapFiltered(:)];
-            Correlation(Correlation(:,1) == 0, :) = [];
-            CorrelationSort = sortrows(Correlation);
+            % RatioMapFiltered(ToRemove == 1) = 0;
+            NormalizedLysotracker(RatioMapFiltered == 0) = 0;
+            edges = 0.015:0.015:3;
+            for h = 1:size(edges, 2) -1
+                Mask = and(RatioMapFiltered >= edges(h), RatioMapFiltered < edges(h+1));
+                x(h,1) = mean([edges(h) edges(h+1)]);
+                y(h,1) =  median(NormalizedLysotracker(Mask == 1));
+                PxCounts(h,1) = sum(Mask(:));
+            end
+            [~, idx] = min(medfilt1(y,50));
+            y(idx:end) = nan;
+            PxCounts(idx:end) = nan;
+            B = [x, y];
 
-            x = CorrelationSort(:,1);
-            y = CorrelationSort(:,2);
-            edges = 0:0.005:1;              % bin edges
-            binIdx = discretize(x, edges); % which bin each x belongs to
-            yMean = accumarray(binIdx, y, [numel(edges)-1, 1], @mean, NaN);
-            xBinCenters = edges(1:end-1)'; % or edges(1:end-1) + 0.025
-            B = [xBinCenters, yMean];
+            NormalizedParticles = obj.channels.Particles ./ max(obj.channels.Particles, [], 'all');
+            NormalizedLysotracker(RatioMapFiltered == 0) = 0;
+            for h = 1:size(edges, 2) -1
+                Mask = and(RatioMapFiltered >= edges(h), RatioMapFiltered < edges(h+1));
+                x2(h,1) = mean([edges(h) edges(h+1)]);
+                y2(h,1) =  mean(NormalizedParticles(Mask == 1));
+            end
+            C = [x2, y2];
+
+            % NormalizedParticles = obj.channels.Particles ./ max(obj.channels.Particles, [], 'all');
+            % NormalizedParticles(obj.channelsSegm.mCherry == 0) = 0;
+            % RatioMapFiltered = RatioMapRaw;
+            % RatioMapFiltered(obj.channelsSegm.mCherry == 0) = 0;
+            % % NormalizedParticles(ToRemove == 1) = 0;
+            % % RatioMapFiltered(ToRemove == 1) = 0;
+            % Correlation = [RatioMapFiltered(:), NormalizedParticles(:)];
+            % Correlation(Correlation(:,2) == 0, :) = [];
+            % CorrelationSort = sortrows(Correlation);
+            % 
+            % x = CorrelationSort(:,1);
+            % y = CorrelationSort(:,2);
+            % edges = 0:0.01:2.5;              % bin edges
+            % binIdx = discretize(x, edges); % which bin each x belongs to
+            % ToRemove = isnan(binIdx);
+            % binIdx(ToRemove) = [];
+            % y(ToRemove) = [];
+            % yMean = accumarray(binIdx, y, [numel(edges)-1, 1], @mean, NaN);
+            % xBinCenters = edges(1:end-1)'; % or edges(1:end-1) + 0.025
+            % C = [xBinCenters, yMean];
 
             RatioMapRaw(edge(obj.channelsSegm.Lysotracker) == 1) = max(RatioMapRaw, [], 'all');
             RatioMap(obj.channelsSegm.mCherry == 0) = 0;
+
+            
 
             % Fig = figure;
             % bg = obj.channels.mCherry;
@@ -617,6 +667,7 @@ classdef LysosomeSegmentation < handle
                 SignalOut, OverlapCoeff, DensityAcidic, DensityBasic, OverlapCoeffAcidic, OverlapCoeffBasic, AreaAcidic, AreaBasic,...
                 ParticlesAcidic, ParticlesBasic, ParticlesAcidicFraction, ParticlesBasicFraction, FractionLysotrackerInAcidic, FractionLysotrackerInBasic];
             Trends = B;
+            TrendsParticles = C;
         end
     end
 end

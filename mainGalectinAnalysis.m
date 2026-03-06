@@ -52,6 +52,8 @@ for a = 1:numel(HourFolders)
                 isSubDirColumn = [SubFolder.isdir]';
 
                 BigResults = [];
+                BigIntensities = [];
+                BigTrends = [];
                 FileNames = [];
 
                 for j = 1:size(SubFolder,1)
@@ -63,10 +65,13 @@ for a = 1:numel(HourFolders)
                         stack.showChannel;
                         stack.SegmentChannels(Threshold);
 
-                        [Results] = stack.GalectinAnalysis;
+                        [Results, Intensities, Trend] = stack.GalectinAnalysis;
                     end
 
                     BigResults = [BigResults; Results*100];
+                    BigIntensities = [BigIntensities; Intensities];
+                    BigTrends(:,1) = Trend(:,1);
+                    BigTrends(:, end+1) = Trend(:,2);
 
                     FileNames{j,1} = file.path;
                     close all

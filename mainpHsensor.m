@@ -7,8 +7,8 @@ file.runSegmentation = 'load'; %load or run
 file.drawROI = 'off'; %'off', or channel name
 
 MainFolder = {'D:\mini\FIREphly sensor'};
-HourFolders = {'20260204', '20260115'};
-CellineFolders = {'mSi', 'mSiPEI', 'Control', 'Chloroquine'}; %'mSi', 'mSiPEI', 'Control', , 'Chloroquine'
+HourFolders = {'20260218'};
+CellineFolders = {'mSiPEI'}; %, 'mSi', 'Control', 'CQ', 
 
 %Give info about the channels, the word needs to be lowercase with no typos
 %care that the
@@ -19,7 +19,7 @@ chan.ch04 = 'Lysotracker';
 
 %some parameters
 slice = 1; %which slice of the 3D stack to select the ROI on
-Threshold = [0.01, 0.1, 0.10, 0.20]; %[0-1], keep it under 0.15, intensity threshold for lysosomes (high = throw away dim/out-of-focus lysosomes)
+Threshold = [0.01, 0.05, 0.10, 0.20]; %[0-1], keep it under 0.15, intensity threshold for lysosomes (high = throw away dim/out-of-focus lysosomes)
 
 %% Loading data
 
@@ -58,29 +58,40 @@ for a = 1:numel(HourFolders)
     
                     Results  = [];
                     Filename = {};
-                    k = 0;   % index for valid entries
+                    k = 1;   % index for valid entries
                     
                     for j = 1:size(SubFolder,1)
                     
                         if isSubDirColumn(j,1) == 1
-                            k = k + 1;
-                    
-                            file.path = append(SubFolder(j).folder, filesep, SubFolder(j).name);
-                    
-                            stack = Core.LysosomeSegmentation(file);
-                            stack.loadDataBioform(chan);
-                            stack.showChannel;
-                            stack.SegmentChannels(Threshold);
+                            try
+                                
+                        
+                                file.path = append(SubFolder(j).folder, filesep, SubFolder(j).name);
+                        
+                                stack = Core.LysosomeSegmentation(file);
+                                stack.loadDataBioform(chan);
+                                stack.showChannel;
+                                stack.SegmentChannels(Threshold);
+        
+                                [Res, Trend, TrendParticle, PxCounts] = stack.CalculatepH;
+        
+                                Results(k,:)  = Res;
+                                Filename{k,1} = file.path;
     
-                            [Res, Trend] = stack.CalculatepH;
+                                Trendline(:,1) = Trend(:,1);
+                                Trendline(:,end+1) = medfilt1(Trend(:,2), 35);
     
-                            Results(k,:)  = Res;
-                            Filename{k,1} = file.path;
+                                TrendParticleline(:,1) = TrendParticle(:,1);
+                                TrendParticleline(:,end+1) = medfilt1(TrendParticle(:,2), 35);
 
-                            Trendline(:,1) = Trend(:,1);
-                            Trendline(:,end+1) = Trend(:,2);
+                                PxCountsAll(:,1) = TrendParticle(:,1);
+                                PxCountsAll(:,end+1) = PxCounts;
                     
-                            close all
+                                close all
+                                k = k + 1;
+                            catch
+                                disp('fail')
+                            end
                         end
                     end
     
@@ -95,24 +106,151 @@ for a = 1:numel(HourFolders)
                     FinalResults.(CellineFolder) = [Results(:,1), Results(:,8), Results(:,9), Results(:,10)];
 
                     x = Trendline(:,1);
-                    Y = Trendline(:,2:end);   % 200x20
-                    y_mean = nanmean(Y, 2);        % 200x1
-                    y_std  = nanstd(Y, 0, 2);      % 200x1
-                    Fig2 = figure; hold on;
-                    errorbar(x, y_mean, y_std, ...
-                        'o-', ...
-                        'LineWidth', 1.5, ...
-                        'MarkerSize', 5, ...
-                        'CapSize', 3);
-                    xlabel('Relative intensity Lysotracker');
-                    ylabel('Ratio mTFP/mCherry (Mean ± SD)');
-                    title('Mean of 20 samples');
-                    box on;
-                    ylim([0 2.5])
+                    
+                    Trendline(:, nanmax(Trendline, [], 1) > 0.5) = [];
+                    for hh = 1:size(Trendline, 2)
+                        [~, PeakLoc(hh)] = max(Trendline(:,hh));
+                    end
+                    Trendline(:, PeakLoc' > 60) = [];
+                  
+                    PxCountsAv = mean(PxCountsAll(:, 2:end), 2, 'omitnan');
+                    PxCountsNorm = PxCountsAv./max(PxCountsAv); 
+                    [~, MaxPixLoc] = max(PxCountsAv);
+                    Trendline(1:MaxPixLoc, :) = NaN;
 
-                    saveas(Fig2, append(CurrentFolder(i).folder, filesep, CurrentFolder(i).name, filesep, 'Trendline.png'));
-                    saveas(Fig2, append(CurrentFolder(i).folder, filesep, CurrentFolder(i).name, filesep, 'Trendline.svg'));
+                    Y = Trendline(:,2:end);
+                    y_mean = smooth(nanmean(Y, 2));
+                    y_std  = smooth(nanstd(Y, 0, 2));
+
+                    alphaVals = log(PxCountsAv)./max(log(PxCountsAv));
+                    alphaVals(alphaVals < 0) = 0;
+                    alphaVals(isinf(abs(alphaVals))) = 0;
+                    alphaVals(isnan(alphaVals)) = 0;
+                    
+                    Fig3 = figure;
+                    subplot(5,1,[1 4])
+                    set(gcf,'Renderer','opengl');
+                    hold on;
+
+                    dx = nanmean(diff(x));
+                    halfWidth = dx/2;
+                    
+                    %% ---- Plot SD as thick vertical patches (light blue) ----
+                    for ii = 1:length(x)
+                        x_patch = [x(ii)-halfWidth, x(ii)+halfWidth, ...
+                                   x(ii)+halfWidth, x(ii)-halfWidth];
+                        
+                        y_patch = [y_mean(ii)-y_std(ii), ...
+                                   y_mean(ii)-y_std(ii), ...
+                                   y_mean(ii)+y_std(ii), ...
+                                   y_mean(ii)+y_std(ii)];
+                        
+                        p = patch(x_patch, y_patch, [0.6 0.85 1], ...
+                            'EdgeColor','none');
+                        
+                        p.FaceAlpha = alphaVals(ii);
+                    end
+                    
+                    %% ---- Plot mean trend line (dark blue, variable alpha) ----
+                    for ii = 1:length(x)-1
+                        c = [0 0 0.5 alphaVals(ii)];  % dark blue with alpha
+                        
+                        line(x(ii:ii+1), y_mean(ii:ii+1), ...
+                            'Color', c, ...
+                            'LineWidth', 2);
+                    end
+
+                    ylabel('Relative intensity lysotracker');
+                    title(['Mean of ', num2str(size(Trendline,2)-1), ' samples']);
+                    ylim([0 0.35])
+                    xlim([0 2.5])
+                    box on;
+
+                    subplot(5,1,5)
+                    plot(x, PxCountsAv)
+                    xlabel('Ratio mTFP/mCherry (Mean ± SD)');
+                    xlim([0 3])
+                    ylabel('Pixel Count');
+
+                    saveas(Fig3, append(CurrentFolder(i).folder, filesep, CurrentFolder(i).name, filesep, 'Trendline.png'));
+                    saveas(Fig3, append(CurrentFolder(i).folder, filesep, CurrentFolder(i).name, filesep, 'Trendline.svg'));
                     writematrix(Trendline, append(CurrentFolder(i).folder, filesep, CurrentFolder(i).name, filesep, 'TrendLinepHSensor.xlsx'));
+
+
+
+
+
+
+
+
+                    x = TrendParticleline(:,1);
+                    
+                    TrendParticleline(:, nanmax(TrendParticleline, [], 1) > 0.5) = [];
+
+                    PxCountsAv = mean(PxCountsAll(:, 2:end), 2, 'omitnan');
+                    PxCountsNorm = PxCountsAv./max(PxCountsAv); 
+                    [~, MaxPixLoc] = max(PxCountsAv);
+                    Trendline(1:MaxPixLoc, :) = NaN;
+
+                    Y = TrendParticleline(:,2:end);
+                    y_mean = smooth(nanmean(Y, 2));
+                    y_std  = smooth(nanstd(Y, 0, 2));
+
+                    alphaVals = log(PxCountsAv)./max(log(PxCountsAv));
+                    alphaVals(alphaVals < 0) = 0;
+                    alphaVals(isinf(abs(alphaVals))) = 0;
+                    alphaVals(isnan(alphaVals)) = 0;
+                    
+                    Fig3 = figure;
+                    subplot(5,1,[1 4])
+                    set(gcf,'Renderer','opengl');
+                    hold on;
+
+                    dx = nanmean(diff(x));
+                    halfWidth = dx/2;
+                    
+                    %% ---- Plot SD as thick vertical patches (light blue) ----
+                    for ii = 1:length(x)
+                        x_patch = [x(ii)-halfWidth, x(ii)+halfWidth, ...
+                                   x(ii)+halfWidth, x(ii)-halfWidth];
+                        
+                        y_patch = [y_mean(ii)-y_std(ii), ...
+                                   y_mean(ii)-y_std(ii), ...
+                                   y_mean(ii)+y_std(ii), ...
+                                   y_mean(ii)+y_std(ii)];
+                        
+                        p = patch(x_patch, y_patch, [0.6 0.85 1], ...
+                            'EdgeColor','none');
+                        
+                        p.FaceAlpha = alphaVals(ii);
+                    end
+                    
+                    %% ---- Plot mean trend line (dark blue, variable alpha) ----
+                    for ii = 1:length(x)-1
+                        c = [0 0 0.5 alphaVals(ii)];  % dark blue with alpha
+                        
+                        line(x(ii:ii+1), y_mean(ii:ii+1), ...
+                            'Color', c, ...
+                            'LineWidth', 2);
+                    end
+
+                    ylabel('Relative intensity particles');
+                    title(['Mean of ', num2str(size(Trendline,2)-1), ' samples']);
+                    ylim([0 0.45])
+                    xlim([0 2.5])
+                    box on;
+
+                    subplot(5,1,5)
+                    plot(x, PxCountsAv)
+                    xlabel('Ratio mTFP/mCherry (Mean ± SD)');
+                    xlim([0 2.5])
+                    ylabel('Pixel Count');
+                    
+                    saveas(Fig3, append(CurrentFolder(i).folder, filesep, CurrentFolder(i).name, filesep, 'TrendlineParticleNew.png'));
+                    saveas(Fig3, append(CurrentFolder(i).folder, filesep, CurrentFolder(i).name, filesep, 'TrendlineParticleNew.svg'));
+                    writematrix(TrendParticleline, append(CurrentFolder(i).folder, filesep, CurrentFolder(i).name, filesep, 'TrendLinepHSensorParticleNew.xlsx'));
+
+                    TrendParticleline(:, nanmax(TrendParticleline, [], 1) > 10) = [];
 
                     disp(append(CellineFolder, ' particle density acidic: ',num2str(mean(ResultTable.DensityAcidic))));
                     disp(append(CellineFolder, ' particle density basic: ',num2str(mean(ResultTable.DensityBasic))));
@@ -123,6 +261,7 @@ for a = 1:numel(HourFolders)
                     writetable(ResultTable, append(CurrentFolder(i).folder, filesep, CurrentFolder(i).name, filesep, 'ResultspHSensor.xlsx'));
 
                     Trendline = [];
+                    TrendParticleLine = [];
                 end
             end
         catch
