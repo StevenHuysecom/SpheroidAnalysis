@@ -8,7 +8,7 @@ file.drawROI = 'off'; %'off', or channel name
 
 MainFolder = {'D:\mini\A549 Lamp1 Gal3'};
 HourFolders = {'LysoTracker'};
-CellineFolders = {'mSiPEI'};
+CellineFolders = {'CQ'};
 
 %Give info about the channels, the word needs to be lowercase with no typos
 %care that the
