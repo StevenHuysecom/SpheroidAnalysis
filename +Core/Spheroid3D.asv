@@ -104,8 +104,8 @@ classdef Spheroid3D < handle
             sliceToShow = round(size(channel.(field{1}),3)/2);
             frameToShow = round(size(channel.(field{1}),4)/2);
             Fig = figure;
-            subplot(1,2,1)
             for i = 1:nField
+                subplot(1,nField,i)
                 currChan = channel.(field{i});
                 try
                     imagesc(currChan(:,:,sliceToShow,frameToShow))
@@ -114,18 +114,10 @@ classdef Spheroid3D < handle
                 end
                 axis image
                 colormap('hot');
-                title(append(field{i}, ' - Slice ', num2str(sliceToShow)));
-            end
-            subplot(1,2,2)
-            for i = 1:nField
-                currChan = channel.(field{i});
-                imagesc(squeeze(max(currChan, [], 3))),
-                axis image
-                colormap('hot');
-                title(append('Max projection on XY / bottom view'));
+                title(field{i})
             end
 
-            saveas(Fig, append(obj.raw.path, filesep, 'Particles.png'));
+            saveas(Fig, append(obj.raw.path, filesep, 'Particles.mat'));
             
         end
 

@@ -54,41 +54,24 @@ for m = 1:numel(DimensionFolders)
                                         info.pxSizeXY = PxSize.PxSizes(1);
                                         info.pxSizeZ  = PxSize.PxSizes(3);
                                         stack = Core.Spheroid3D(file,info);
-                                        stack.loadDataBioform(chan);
+                                        stack.loadDataBioformSingleChan(chan);
                                         stack.showChannel;
-                                        
-                                        %% Find center of spheroid
-                                        stack.findCenter;
-                                        
-                                        %% Change to ellipsoid coordinates
-                                        stack.CartToEllipsoid;
 
-                                        %% Integrate over r
-                                        [IntDepth] = stack.IntegrateR;
-                                        for l = 1:size(IntDepth, 1)
-                                            pos = IntDepth(l, 1);  
-                                            value = IntDepth(l, 2); 
-                                            rowIndex = find(IntMatrix == pos, 1);  
-                                            if ~isempty(rowIndex)                   
-                                                IntMatrix(rowIndex, j+1) = value;   
-                                            end
-                                        end
-    
                                         %% Get full spheroid intensity uptake
-                                        [TotInt] = stack.GetFullInt;
-                                        SpheroidInt = [SpheroidInt, TotInt];
+                                        [TotInt] = stack.GetFullIntSpheroids;
+                                        ToAdd = [num2cell(TotInt), repmat({SubFolder(j).name}, size(TotInt, 1), 1)];
+                                        SpheroidInt = [SpheroidInt; ToAdd];
+                                        ToAdd = [];
+                                        TotInt = [];
                                     end
                                 catch 
-                                    test = 1;
                                 end
                             end
-                            filename = append(SubFolder(1).folder, filesep,'IntMatrix.mat');
-                            save(filename, 'IntMatrix');
-                            filename = append(SubFolder(1).folder, filesep,'SpheroidIntTotal.mat');
-                            save(filename, 'SpheroidInt');
 
-                            IntMatrix(IntMatrix == 0) = NaN;
-                            Results.(ParticleFolder) = mean(IntMatrix(:, 2:end), 2, 'omitnan');
+                            ResultsTable = cell2table(SpheroidInt, 'VariableNames', {'Intensity','Volume (px)','Position'});
+                            writetable(ResultsTable, append(MainFolder{1}, filesep, DimensionFolder,...
+                                filesep, HourFolder, filesep,'IntensitySpheroids.xlsx'), 'Sheet', ParticleFolder);
+                            close all
                         end
                     catch
                     end

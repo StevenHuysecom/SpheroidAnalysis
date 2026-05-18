@@ -6,20 +6,20 @@ file.ext  = '.lif';
 file.runSegmentation = 'run'; %load or run
 file.drawROI = 'off'; %'off', or channel name
 
-MainFolder = {'D:\mini'};
-HourFolders = {'Lamp1Gal3_monoclonal'};
-CellineFolders = {'mSi_PB_PEI'}; %, 'mSi_PB_PEI'
+MainFolder = {'D:\testdata Mats'};
+HourFolders = {'fateNanorods'};
+CellineFolders = {'testdata1'}; %, 'mSi_PB_PEI'
 
 %Give info about the channels, the word needs to be lowercase with no typos
 %care that the
-chan.ch01 = 'Particles';
-chan.ch02 = 'Lysotracker';
-chan.ch03 = 'Lamp1';
-chan.ch04 = 'Galactin';
+chan.ch01 = 'Lamp1';
+chan.ch02 = 'Particles';
+chan.ch03 = 'siRNA';
+chan.ch04 = 'ignore';
 
 %some parameters
 slice = 1; %which slice of the 3D stack to select the ROI on
-Threshold = [0.075, 0.10, 0.05, 0.15]; %[0-1], keep it under 0.15, intensity threshold for lysosomes (high = throw away dim/out-of-focus lysosomes)
+Threshold = [0.15, 0.30, 0.75, 1]; %[0-1], keep it under 0.15, intensity threshold for lysosomes (high = throw away dim/out-of-focus lysosomes)
 
 %% Loading data
 

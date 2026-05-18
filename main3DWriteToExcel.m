@@ -3,10 +3,10 @@ close all;
 clc;
 %% User Input
 file.ext  = '.lif';
-MainFolder = {'E:\Data Rita'};
-DimensionFolders = {'3D_A549', '3D_IGR37'};
-HourFolders = {'170nm', '200nm', '230nm'};
-ParticleFolders = {''};
+MainFolder = {'D:'};
+DimensionFolders = {'STEVEN'};
+HourFolders = {'Data3DSpheroid'};
+ParticleFolders = {'control', 'core', 'homo', 'out'};
 
 BigMatrix = [];
 
@@ -26,8 +26,10 @@ for m = 1:numel(DimensionFolders)
 
                 for i = 3:size(Folder, 1)
                     if Folder(i).isdir == 1
-                        file.path = append(Folder(i).folder, filesep, Folder(i).name);
+                        Folder2 = dir(append(Folder(i).folder, filesep, Folder(i).name));
+                        file.path = append(Folder2(3).folder, filesep, Folder2(3).name);
 
+                        Folder2 = dir(file.path);
                         % if strcmp(ParticleFolder, 'A549')
                             Range1 = 'A3:Z503';
                             Range2 = 'B1:Z1';
@@ -48,11 +50,13 @@ for m = 1:numel(DimensionFolders)
                         % 
                         IntProfile = load(append(file.path, filesep, 'IntMatrix.mat'));
                         IntProfile = IntProfile.IntMatrix;   
-                        writematrix(IntProfile, append(MainFolder{1}, filesep, DimensionFolder, filesep, 'Results3D.xlsx'), 'Sheet', HourFolder, 'Range', Range1);
+                        writematrix(IntProfile, append(MainFolder{1}, filesep, DimensionFolder, filesep, HourFolder, filesep, 'Results3D.xlsx'), 'Sheet', Folder(i).name, 'Range', Range1);
                         IntTot = load(append(file.path, filesep, 'SpheroidIntTotal.mat'));
                         IntTot = IntTot.SpheroidInt;
-                        writematrix(IntTot, append(MainFolder{1}, filesep, DimensionFolder, filesep, 'Results3D.xlsx'), 'Sheet', HourFolder, 'Range', Range2);
-                        writecell({ParticleFolder}, append(MainFolder{1}, filesep, DimensionFolder, filesep, 'Results3D.xlsx'), 'Sheet', HourFolder, 'Range', Range3);
+                        writematrix(IntTot, append(MainFolder{1}, filesep, DimensionFolder, filesep, HourFolder, filesep, 'Results3D.xlsx'), 'Sheet', Folder(i).name, 'Range', Range2);
+                        writecell({ParticleFolder}, append(MainFolder{1}, filesep, DimensionFolder, filesep, HourFolder, filesep, 'Results3D.xlsx'), 'Sheet', Folder(i).name, 'Range', Range3);
+                        IntProfile = [];
+                        IntTot = [];
                     end
                 end   
             % catch

@@ -175,9 +175,7 @@ classdef LysosomeSegmentation < handle
             CurrFrameSmooth(CurrFrameBg == 0) = 0;
             CurrFrameSmooth = imadjust(CurrFrameBg);
             Thresholdmap = adaptthresh(CurrFrameSmooth, Threshold);
-            Thresholdingmask1 = imbinarize(CurrFrameSmooth, Thresholdmap);
-            Thresholdingmask2 = CurrFrameSmooth > Threshold;
-            Thresholdingmask = Thresholdingmask2 & Thresholdingmask1;
+            Thresholdingmask = imbinarize(CurrFrameSmooth, Thresholdmap);
             Thresholdingmask = bwareaopen(Thresholdingmask, 5);
             labels = bwlabeln(Thresholdingmask);
             props = regionprops(labels, CurrFrameSmooth, 'PixelIdxList', 'MaxIntensity');
@@ -430,7 +428,7 @@ classdef LysosomeSegmentation < handle
             channels_mask = obj.channelsSegm;
             
             channelnames = fieldnames(obj.channels); 
-            pairs = {{channelnames{1},channelnames{2}}, {channelnames{2},channelnames{3}}, {channelnames{1},channelnames{3}}};
+            pairs = {{channelnames{1},channelnames{4}}, {channelnames{2},channelnames{4}}, {channelnames{3},channelnames{4}}};
 
             Results = [];
             for k = 1:length(pairs)

@@ -6,20 +6,20 @@ file.ext  = '.lif';
 file.runSegmentation = 'load'; %load or run
 file.drawROI = 'off'; %'off', or channel name
 
-MainFolder = {'D:\mini\FIREphly sensor'};
-HourFolders = {'20260218'};
-CellineFolders = {'mSiPEI'}; %, 'mSi', 'Control', 'CQ', 
+MainFolder = {'C:\Users\steve\OneDrive\Documenten\data rita'};
+HourFolders = {'Lamp Irradiation 5'};
+CellineFolders = {'NewNPs_2min_15mW'}; %, 'mSi', 'Control', 'CQ', 
 
 %Give info about the channels, the word needs to be lowercase with no typos
 %care that the
-chan.ch01 = 'mTFP1';
-chan.ch02 = 'mCherry';
-chan.ch03 = 'Particles';
-chan.ch04 = 'Lysotracker';
+chan.ch01 = 'SigChannel';
+chan.ch02 = 'ignore';
+chan.ch03 = 'RefChannel';
+chan.ch04 = 'ignore';
 
 %some parameters
 slice = 1; %which slice of the 3D stack to select the ROI on
-Threshold = [0.01, 0.05, 0.10, 0.20]; %[0-1], keep it under 0.15, intensity threshold for lysosomes (high = throw away dim/out-of-focus lysosomes)
+Threshold = [0.01, 0.001, 0.25, 0.20]; %[0-1], keep it under 0.15, intensity threshold for lysosomes (high = throw away dim/out-of-focus lysosomes)
 
 %% Loading data
 
